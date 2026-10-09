@@ -184,9 +184,17 @@ private fun HomeworkRow(hw: HomeworkEntry, today: LocalDate, last: Boolean, onDo
             Text(hw.title, style = Atlas.type.body, color = Atlas.colors.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 if (hw.subjectColor != null) SubjectMark(Atlas.colors.subject(hw.subjectColor))
+                if (hw.subject != null) {
+                    Text(
+                        hw.subject, style = Atlas.type.bodySmall, color = Atlas.colors.textSecondary,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false),
+                    )
+                    Text("·", style = Atlas.type.bodySmall, color = Atlas.colors.textSecondary)
+                }
                 Text(
-                    listOfNotNull(hw.subject, "due ${Formats.relativeDay(hw.due, today)}").joinToString("  ·  "),
+                    "due ${Formats.relativeDay(hw.due, today)}",
                     style = Atlas.type.bodySmall,
+                    maxLines = 1,
                     color = if (hw.due == today && !hw.done) Atlas.colors.accentText else Atlas.colors.textSecondary,
                 )
             }

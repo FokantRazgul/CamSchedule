@@ -1,24 +1,26 @@
 [versions]
-# Android / Google Maven versions are re-checked against maven.google.com before the first APK build.
-agp = "9.1.0"
+# Checked against maven.google.com on 2026-10-09.
+agp = "9.4.1"
 kotlin = "2.4.21"
 ksp = "2.3.12"
-compileSdk = "36"
-targetSdk = "36"
+compileSdk = "37"
+targetSdk = "37"
 minSdk = "26"
 
 coroutines = "1.11.0"
 composeBom = "2026.09.00"
-activityCompose = "1.11.0"
-coreKtx = "1.17.0"
-lifecycle = "2.10.0"
-navigation = "2.9.5"
-room = "2.8.3"
-datastore = "1.1.7"
-work = "2.11.0"
+activityCompose = "1.13.0"
+coreKtx = "1.19.1"
+lifecycle = "2.11.0"
+navigation = "2.10.2"
+room = "2.8.5"
+datastore = "1.2.1"
+work = "2.12.0"
 serialization = "1.11.0"
 biweekly = "0.6.8"
 junit = "4.13.2"
+robolectric = "4.17"
+roborazzi = "1.76.0"
 
 [libraries]
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
@@ -49,6 +51,11 @@ work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "w
 
 biweekly = { module = "net.sf.biweekly:biweekly", version.ref = "biweekly" }
 junit = { module = "junit:junit", version.ref = "junit" }
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
+roborazzi = { module = "io.github.takahirom.roborazzi:roborazzi", version.ref = "roborazzi" }
+roborazzi-compose = { module = "io.github.takahirom.roborazzi:roborazzi-compose", version.ref = "roborazzi" }
+compose-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4" }
+compose-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

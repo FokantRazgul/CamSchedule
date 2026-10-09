@@ -94,11 +94,13 @@ fun NumberEntry(
     modifier: Modifier = Modifier,
     placeholder: String = "0",
     suffix: String? = null,
+    width: Dp = if (suffix == null) 56.dp else 76.dp,
 ) {
+    // Fixed width: the underline must hug the number, not stretch across the row.
     LedgerField(
         value = value,
         onValueChange = { new -> if (new.length <= 4 && new.all(Char::isDigit)) onValueChange(new) },
-        modifier = modifier,
+        modifier = modifier.width(width),
         placeholder = placeholder,
         suffix = suffix,
         keyboardType = KeyboardType.Number,

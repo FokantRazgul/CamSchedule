@@ -87,7 +87,10 @@ object SampleData {
             ExerciseLine(7, "Squats", ExerciseUnit.REPS, 30, 60),
             ExerciseLine(10, "Glute bridges", ExerciseUnit.REPS, 10, 40),
         ),
-        run = RunSummary(weekKm = 11.2, targetKm = 15.0, lastRun = "Sun 18 Oct  ·  5.0 km  ·  27:00  ·  5:24 /km"),
+        run = RunSummary(
+            weekKm = 11.2, targetKm = 15.0,
+            lastRunDate = "Sun 18 Oct", lastRunStats = "5.0 km  ·  27:00  ·  5:24 /km",
+        ),
         recent = listOf(
             MoonPhase.FULL, MoonPhase.FULL, MoonPhase.NEW, MoonPhase.FULL, MoonPhase.FULL, MoonPhase.FULL, MoonPhase.HALF,
             MoonPhase.FULL, MoonPhase.NEW, MoonPhase.FULL, MoonPhase.FULL, MoonPhase.FULL, MoonPhase.HALF, MoonPhase.CRESCENT,

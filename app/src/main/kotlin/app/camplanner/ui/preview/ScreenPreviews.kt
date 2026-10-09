@@ -9,7 +9,7 @@ import app.camplanner.ui.today.TodayScreen
 
 private const val INK = 0xFF0B0D14
 
-@Preview(name = "Today", widthDp = 393, heightDp = 960, showBackground = true, backgroundColor = INK)
+@Preview(name = "Today", widthDp = 393, heightDp = 720, showBackground = true, backgroundColor = INK)
 @Composable
 fun TodayPreview() = CamPlannerTheme {
     TodayScreen(SampleData.today, onRoute = {}, onOpenEvent = {}, onOpenCheckIn = {}, onFixPermissions = {})
@@ -24,13 +24,13 @@ fun TodayAttentionPreview() = CamPlannerTheme {
     )
 }
 
-@Preview(name = "Daily check-in", widthDp = 393, heightDp = 1180, showBackground = true, backgroundColor = INK)
+@Preview(name = "Daily check-in", widthDp = 393, heightDp = 900, showBackground = true, backgroundColor = INK)
 @Composable
 fun CheckInPreview() = CamPlannerTheme {
     CheckInScreen(SampleData.checkIn, onPagesChange = { _, _ -> }, onHomeworkDone = { _, _ -> }, onLogRemaining = {}, onSave = {})
 }
 
-@Preview(name = "Fitness", widthDp = 393, heightDp = 1250, showBackground = true, backgroundColor = INK)
+@Preview(name = "Fitness", widthDp = 393, heightDp = 1100, showBackground = true, backgroundColor = INK)
 @Composable
 fun FitnessPreview() = CamPlannerTheme {
     FitnessScreen(

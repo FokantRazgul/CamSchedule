@@ -24,6 +24,23 @@ android {
         compose = true
     }
 
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            all {
+                // Preview renders are written, not compared: they exist for design review.
+                it.systemProperty("roborazzi.test.record", "true")
+                it.maxHeapSize = "2g"
+                // Robolectric's SDK 36 runtime reaches into FileDescriptor internals on JDK 17+.
+                it.jvmArgs("--add-opens=java.base/jdk.internal.access=ALL-UNNAMED")
+                // Optional mirror for Robolectric's android-all download (set in ~/.gradle/gradle.properties).
+                providers.gradleProperty("robolectricRepoUrl").orNull?.let { url ->
+                    it.systemProperty("robolectric.dependency.repo.url", url)
+                }
+            }
+        }
+    }
+
     packaging {
         resources.excludes += setOf("META-INF/{AL2.0,LGPL2.1}", "META-INF/versions/9/OSGI-INF/MANIFEST.MF")
     }
@@ -39,4 +56,10 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
 
     testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
+    testImplementation(platform(libs.compose.bom))
+    testImplementation(libs.compose.ui.test.junit4)
+    debugImplementation(libs.compose.ui.test.manifest)
 }

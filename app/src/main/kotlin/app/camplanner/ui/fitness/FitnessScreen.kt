@@ -74,8 +74,10 @@ data class ExerciseLine(
 data class RunSummary(
     val weekKm: Double,
     val targetKm: Double,
-    /** "Tue 20 Oct · 5.0 km · 27:00 · 5:24 /km" or null when nothing is logged this term. */
-    val lastRun: String?,
+    /** "Sun 18 Oct", or null when nothing is logged yet. */
+    val lastRunDate: String?,
+    /** "5.0 km  ·  27:00  ·  5:24 /km" */
+    val lastRunStats: String?,
 )
 
 @Composable
@@ -164,18 +166,21 @@ fun FitnessScreen(
         OrbitArc(progress = (state.run.weekKm / state.run.targetKm).toFloat())
         Spacer(Modifier.height(space.s))
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                state.run.lastRun?.let { "Last: $it" } ?: "No runs logged yet.",
-                style = Atlas.type.time,
-                color = c.textSecondary,
-                modifier = Modifier.weight(1f),
-            )
+            Column(Modifier.weight(1f)) {
+                if (state.run.lastRunDate != null && state.run.lastRunStats != null) {
+                    Text("LAST RUN  ·  ${state.run.lastRunDate.uppercase()}", style = Atlas.type.overline, color = c.textSecondary)
+                    Spacer(Modifier.height(2.dp))
+                    Text(state.run.lastRunStats, style = Atlas.type.time, color = c.text)
+                } else {
+                    Text("No runs logged yet.", style = Atlas.type.aside, color = c.textSecondary)
+                }
+            }
             AtlasButton("Log a run", onLogRun)
         }
 
         Spacer(Modifier.height(space.xxl))
         SectionHeader("Last fortnight") {
-            Text(Formats.count(state.streakDays, "day") + " streak", style = Atlas.type.time, color = c.gold)
+            Text("${state.streakDays}-day streak", style = Atlas.type.time, color = c.gold)
         }
         Spacer(Modifier.height(space.s))
         MoonPhaseRow(state.recent, moonSize = 14.dp)

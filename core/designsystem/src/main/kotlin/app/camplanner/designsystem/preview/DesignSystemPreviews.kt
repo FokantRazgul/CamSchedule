@@ -1,6 +1,7 @@
 package app.camplanner.designsystem.preview
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,7 +36,7 @@ import app.camplanner.designsystem.theme.Atlas
 import app.camplanner.designsystem.theme.CamPlannerTheme
 
 /** One sheet with every token and component, for design review. */
-@Preview(name = "Design system", widthDp = 393, heightDp = 1180, showBackground = true, backgroundColor = 0xFF0B0D14)
+@Preview(name = "Design system", widthDp = 393, heightDp = 900, showBackground = true, backgroundColor = 0xFF0B0D14)
 @Composable
 fun DesignSystemSheet() = CamPlannerTheme {
     val c = Atlas.colors
@@ -101,7 +102,7 @@ fun DesignSystemSheet() = CamPlannerTheme {
 @Composable
 private fun Swatch(name: String, color: Color) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(Modifier.size(34.dp).background(color))
+        Box(Modifier.size(34.dp).background(color).border(1.dp, Atlas.colors.hairline))
         Text(name, style = Atlas.type.overline.copy(letterSpacing = Atlas.type.overline.letterSpacing * 0.3f), color = Atlas.colors.textSecondary)
     }
 }

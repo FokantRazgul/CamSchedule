@@ -68,7 +68,11 @@ fun AtlasButton(
         }
         .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
         .padding(contentPadding)
-    Row(base, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+    Row(
+        base,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
+    ) {
         if (glyph != null) Icon(glyph, contentDescription = null, tint = labelColor, modifier = Modifier.size(16.dp))
         Text(text, style = textStyle, color = labelColor)
     }
