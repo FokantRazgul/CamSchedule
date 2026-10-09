@@ -27,7 +27,5 @@ include(
     ":core:model",
     ":core:domain",
     ":core:ics",
-    ":core:data",
-    ":core:alarms",
     ":core:designsystem",
 )
