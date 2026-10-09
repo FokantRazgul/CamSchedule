@@ -11,6 +11,10 @@ import app.camplanner.ui.checkin.ReadingEntry
 import app.camplanner.ui.fitness.ExerciseLine
 import app.camplanner.ui.fitness.FitnessUiState
 import app.camplanner.ui.fitness.RunSummary
+import app.camplanner.domain.Almanac
+import app.camplanner.domain.Roman
+import app.camplanner.domain.TermCalendar
+import app.camplanner.ui.today.AlmanacInfo
 import app.camplanner.ui.today.TodayItem
 import app.camplanner.ui.today.TodayUiState
 import java.time.LocalDate
@@ -20,10 +24,23 @@ import java.time.LocalTime
 object SampleData {
     val date: LocalDate = LocalDate.of(2026, 10, 20)
 
+    private val zone = java.time.ZoneId.of("Europe/London")
+    private val sun = Almanac.sunTimes(date, Almanac.CAMBRIDGE_LAT, Almanac.CAMBRIDGE_LNG)
+    private val moon = Almanac.moon(date.atTime(21, 0).atZone(zone).toInstant())
+
     val today = TodayUiState(
         date = date,
+        now = LocalTime.of(11, 20),
         morningAlarm = LocalTime.of(7, 30),
         checkIn = LocalTime.of(18, 30),
+        termLabel = "Michaelmas Term  ·  Week ${Roman.of(TermCalendar.weekOf(date, LocalDate.of(2026, 10, 6), null) ?: 0)}",
+        almanac = AlmanacInfo(
+            sunrise = sun.sunrise?.atZone(zone)?.toLocalTime(),
+            sunset = sun.sunset?.atZone(zone)?.toLocalTime(),
+            moonName = moon.phase.label,
+            moonIllumination = moon.illumination.toFloat(),
+            moonWaxing = moon.waxing,
+        ),
         items = listOf(
             TodayItem.Event(
                 key = "e1", id = 1, title = "Vectors & Matrices", subject = "Mathematics", subjectColor = 1,

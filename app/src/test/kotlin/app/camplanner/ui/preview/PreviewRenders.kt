@@ -24,13 +24,13 @@ class PreviewRenders {
         captureRoboImage("build/previews/$name.png", content = content)
     }
 
-    @Test fun today() = render("1-today", 720) { TodayPreview() }
+    @Test fun today() = render("1-today", 1250) { TodayPreview() }
 
-    @Test fun todayAttention() = render("1b-today-permission-missing", 400) { TodayAttentionPreview() }
+    @Test fun todayAttention() = render("1b-today-permission-missing", 700) { TodayAttentionPreview() }
 
-    @Test fun checkIn() = render("2-check-in", 900) { CheckInPreview() }
+    @Test fun checkIn() = render("2-check-in", 1250) { CheckInPreview() }
 
-    @Test fun fitness() = render("3-fitness", 1100) { FitnessPreview() }
+    @Test fun fitness() = render("3-fitness", 1360) { FitnessPreview() }
 
     @Test fun designSystem() = render("0-design-system", 900) { DesignSystemSheet() }
 }

@@ -19,6 +19,9 @@ object Formats {
     fun weekday(d: LocalDate): String = weekdayFmt.format(d)
     fun shortDate(d: LocalDate): String = shortDateFmt.format(d)
 
+    /** "MMXXVI" */
+    fun romanYear(d: LocalDate): String = app.camplanner.domain.Roman.of(d.year)
+
     fun count(n: Int, noun: String): String = if (n == 1) "1 $noun" else "$n ${noun}s"
 
     /** "45 min", "1 h 30 min", "2 h". */

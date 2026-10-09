@@ -23,6 +23,7 @@ fun Modifier.starField(
     color: Color,
     seed: Int = 1729,
     starsPer10k: Float = 1.1f,
+    graticule: Boolean = false,
 ): Modifier = drawWithCache {
     val dpArea = (size.width / this.density) * (size.height / this.density)
     val count = (dpArea / 10_000f * starsPer10k).toInt().coerceIn(0, 600)
@@ -37,18 +38,46 @@ fun Modifier.starField(
             alpha = if (bright) 0.22f else 0.05f + random.nextFloat() * 0.10f,
         )
     }
+    // A fragment of a star chart's coordinate grid: circles of declination round a pole beyond
+    // the top-right corner and hour lines radiating from it. Very faint; it should be felt more
+    // than seen.
+    val pole = Offset(size.width * 1.15f, -size.width * 0.35f)
+    val gridColor = color.copy(alpha = 0.045f)
+    val step = 64f * this.density
+    val reach = size.width * 1.9f
     onDrawBehind {
+        if (graticule) {
+            var r = step * 3
+            while (r < reach) {
+                drawCircle(gridColor, r, pole, style = androidx.compose.ui.graphics.drawscope.Stroke(1f))
+                r += step
+            }
+            for (deg in 100..250 step 12) {
+                val a = Math.toRadians(deg.toDouble())
+                drawLine(
+                    gridColor,
+                    Offset(pole.x + step * 3 * kotlin.math.cos(a).toFloat(), pole.y + step * 3 * kotlin.math.sin(a).toFloat()),
+                    Offset(pole.x + reach * kotlin.math.cos(a).toFloat(), pole.y + reach * kotlin.math.sin(a).toFloat()),
+                    1f,
+                )
+            }
+        }
         stars.forEach { s -> drawCircle(color.copy(alpha = s.alpha), s.radiusPx, Offset(s.x, s.y)) }
     }
 }
 
 /** Page background with the star scatter, used behind the home (Today) screen. */
 @Composable
-fun StarFieldBackground(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
+fun StarFieldBackground(
+    modifier: Modifier = Modifier,
+    graticule: Boolean = true,
+    starsPer10k: Float = 1.1f,
+    content: @Composable BoxScope.() -> Unit,
+) {
     Box(
         modifier = modifier
             .background(Atlas.colors.background)
-            .starField(Atlas.colors.text),
+            .starField(Atlas.colors.text, starsPer10k = starsPer10k, graticule = graticule),
         content = content,
     )
 }

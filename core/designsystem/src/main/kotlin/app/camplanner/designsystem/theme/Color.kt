@@ -59,6 +59,15 @@ data class AtlasColors(
 
     /** Overdue / error uses the accent rather than a new red, to stay inside the palette. */
     val warning: Color get() = accentText
+
+    /** Engraved line work: double rules, dial graduations. Ivory at low strength, not a new hue. */
+    val engraving: Color get() = text.copy(alpha = 0.36f)
+
+    /** Rubrication: the red of section numerals in old printed books. */
+    val rubric: Color get() = accentText
+
+    /** The lit half of the astrolabe; barely there. */
+    val daylight: Color get() = text.copy(alpha = 0.045f)
 }
 
 val DarkAtlasColors = AtlasColors(

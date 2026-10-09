@@ -46,6 +46,12 @@ data class AtlasType(
     val label: TextStyle,
     /** Spaced small capitals for section headings, like an almanac's running heads. */
     val overline: TextStyle,
+    /** Italic serif section titles: "Reading", "The Order of the Day". */
+    val sectionTitle: TextStyle,
+    /** Roman section numerals, set in the rubric colour. */
+    val rubric: TextStyle,
+    /** Italic serif weekday above the date. */
+    val dateline: TextStyle,
     /** Times of day and durations. */
     val time: TextStyle,
 )
@@ -60,7 +66,7 @@ val DefaultAtlasType = AtlasType(
         fontFeatureSettings = TABULAR, lineHeightStyle = trim,
     ),
     display = TextStyle(
-        fontFamily = Cormorant, fontWeight = FontWeight.Medium, fontSize = 38.sp, lineHeight = 42.sp,
+        fontFamily = Cormorant, fontWeight = FontWeight.Medium, fontSize = 48.sp, lineHeight = 50.sp,
         letterSpacing = (-0.005).em, fontFeatureSettings = TABULAR,
     ),
     headline = TextStyle(
@@ -82,8 +88,20 @@ val DefaultAtlasType = AtlasType(
         letterSpacing = 0.01.em,
     ),
     overline = TextStyle(
-        fontFamily = Hanken, fontWeight = FontWeight.Medium, fontSize = 11.sp, lineHeight = 14.sp,
-        letterSpacing = 0.16.em,
+        fontFamily = Hanken, fontWeight = FontWeight.Medium, fontSize = 10.5.sp, lineHeight = 14.sp,
+        letterSpacing = 0.22.em,
+    ),
+    sectionTitle = TextStyle(
+        fontFamily = Cormorant, fontStyle = FontStyle.Italic, fontSize = 25.sp, lineHeight = 28.sp,
+        fontFeatureSettings = TABULAR,
+    ),
+    rubric = TextStyle(
+        fontFamily = Cormorant, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, lineHeight = 20.sp,
+        letterSpacing = 0.06.em,
+    ),
+    dateline = TextStyle(
+        fontFamily = Cormorant, fontStyle = FontStyle.Italic, fontSize = 24.sp, lineHeight = 28.sp,
+        fontFeatureSettings = TABULAR,
     ),
     time = TextStyle(
         fontFamily = Hanken, fontWeight = FontWeight.Medium, fontSize = 13.sp, lineHeight = 16.sp,

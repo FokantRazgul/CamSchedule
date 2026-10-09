@@ -43,6 +43,8 @@ fun OrbitRing(
     arcWidth: Dp = 1.5.dp,
     markFraction: Float? = null,
     showBody: Boolean = true,
+    graduations: Int = 0,
+    majorEvery: Int = 5,
     content: @Composable BoxScope.() -> Unit = {},
 ) {
     val animated by animateFloatAsState(
@@ -51,6 +53,8 @@ fun OrbitRing(
         label = "orbit",
     )
     val markColor = Atlas.colors.textSecondary
+    val engraving = Atlas.colors.engraving
+    val faint = Atlas.colors.hairline
     Box(
         modifier = modifier
             .size(diameter)
@@ -60,9 +64,28 @@ fun OrbitRing(
         Canvas(Modifier.size(diameter)) {
             val stroke = arcWidth.toPx()
             val bodyRadius = stroke * 1.9f
-            val inset = bodyRadius + 1f
+            // Graduated dials sit inside a scale of ticks, like an instrument bezel.
+            val scale = if (graduations > 0) 9.dp.toPx() else 0f
+            val inset = bodyRadius + 1f + scale
             val arcSize = Size(size.width - inset * 2, size.height - inset * 2)
             val topLeft = Offset(inset, inset)
+            if (graduations > 0) {
+                val r = (size.minDimension - inset * 2) / 2f
+                drawCircle(engraving, r + scale, center, style = Stroke(1f))
+                for (i in 0 until graduations) {
+                    val major = i % majorEvery == 0
+                    val a = Math.toRadians((-90.0 + 360.0 * i / graduations))
+                    val dx = cos(a).toFloat()
+                    val dy = sin(a).toFloat()
+                    val from = r + scale - (if (major) 6.dp.toPx() else 3.5.dp.toPx())
+                    drawLine(
+                        if (major) engraving else faint,
+                        Offset(center.x + from * dx, center.y + from * dy),
+                        Offset(center.x + (r + scale) * dx, center.y + (r + scale) * dy),
+                        strokeWidth = if (major) 1.2f else 1f,
+                    )
+                }
+            }
             drawArc(trackColor, 0f, 360f, false, topLeft, arcSize, style = Stroke(width = 1f))
             if (markFraction != null) drawTick(markFraction, inset, markColor, stroke * 3f)
             if (animated > 0f) {

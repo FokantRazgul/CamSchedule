@@ -1,6 +1,6 @@
 package app.camplanner.ui.fitness
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -26,15 +26,16 @@ import app.camplanner.designsystem.components.ActionStyle
 import app.camplanner.designsystem.components.AtlasButton
 import app.camplanner.designsystem.components.ChoiceRow
 import app.camplanner.designsystem.components.MoonPhase
-import app.camplanner.designsystem.components.MoonPhaseRow
 import app.camplanner.designsystem.components.NumberEntry
 import app.camplanner.designsystem.components.OrbitArc
 import app.camplanner.designsystem.components.OrbitDot
 import app.camplanner.designsystem.components.OrbitRing
 import app.camplanner.designsystem.components.QuickAddButton
 import app.camplanner.designsystem.components.RuledRow
-import app.camplanner.designsystem.components.ScreenHeading
-import app.camplanner.designsystem.components.SectionHeader
+import app.camplanner.designsystem.components.Masthead
+import app.camplanner.designsystem.components.Moon
+import app.camplanner.designsystem.components.SectionTitle
+import app.camplanner.designsystem.components.StarFieldBackground
 import app.camplanner.designsystem.theme.Atlas
 import app.camplanner.model.ExerciseUnit
 import app.camplanner.ui.format.Formats
@@ -94,23 +95,28 @@ fun FitnessScreen(
 ) {
     val space = Atlas.space
     val c = Atlas.colors
+    StarFieldBackground(modifier.fillMaxSize(), starsPer10k = 0.6f) {
     Column(
-        modifier
+        Modifier
             .fillMaxSize()
-            .background(c.background)
             .windowInsetsPadding(WindowInsets.statusBars)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = space.gutter),
     ) {
-        Spacer(Modifier.height(space.xl))
-        ScreenHeading(
-            title = "Fitness",
-            overline = "${Formats.weekday(state.date)} ${Formats.dayMonth(state.date)}" + if (state.isRestDay) "  ·  rest day" else "",
-        )
-        Spacer(Modifier.height(space.xl))
+        Spacer(Modifier.height(space.l))
+        Masthead(left = "Exercitia", right = if (state.isRestDay) "Dies quietis" else Formats.romanYear(state.date))
+        Spacer(Modifier.height(space.l))
+        Text("${Formats.weekday(state.date)}, ${Formats.dayMonth(state.date)}", style = Atlas.type.dateline, color = c.textSecondary)
+        Text("Fitness", style = Atlas.type.display, color = c.text)
+        Spacer(Modifier.height(space.xs))
+        Text("Mens sana in corpore sano", style = Atlas.type.aside, color = c.textSecondary)
 
-        // Two large orbits.
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+        Spacer(Modifier.height(space.xl))
+        SectionTitle("I", "Upper Body") {
+            Text("${state.main.sumOf { it.done }} of ${state.main.sumOf { it.target }}", style = Atlas.type.time, color = c.textSecondary)
+        }
+        Spacer(Modifier.height(space.l))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             state.main.forEach { line -> MainOrbit(line) }
         }
         Spacer(Modifier.height(space.l))
@@ -131,14 +137,17 @@ fun FitnessScreen(
         }
 
         Spacer(Modifier.height(space.xxl))
-        SectionHeader("Abs & legs") {
-            AtlasButton("Edit", onManageExercises, style = ActionStyle.Text, contentPadding = PaddingValues(0.dp))
+        SectionTitle("II", "Abs & Legs") {
+            Text(
+                "Edit", style = Atlas.type.label, color = c.accentText,
+                modifier = Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onManageExercises),
+            )
         }
         state.others.forEachIndexed { i, line ->
             RuledRow(showRule = i != state.others.lastIndex) {
                 OrbitDot(line.fraction, color = if (line.remaining == 0) c.gold else c.accent)
                 Column(Modifier.weight(1f)) {
-                    Text(line.name, style = Atlas.type.body, color = c.text)
+                    Text(line.name, style = Atlas.type.title, color = c.text)
                     Text(progressText(line), style = Atlas.type.time, color = c.textSecondary)
                 }
                 if (line.remaining > 0) {
@@ -153,7 +162,7 @@ fun FitnessScreen(
         }
 
         Spacer(Modifier.height(space.xxl))
-        SectionHeader("Running") {
+        SectionTitle("III", "The Run") {
             Text("this week", style = Atlas.type.time, color = c.textSecondary)
         }
         Spacer(Modifier.height(space.s))
@@ -179,14 +188,35 @@ fun FitnessScreen(
         }
 
         Spacer(Modifier.height(space.xxl))
-        SectionHeader("Last fortnight") {
+        SectionTitle("IV", "The Fortnight") {
             Text("${state.streakDays}-day streak", style = Atlas.type.time, color = c.gold)
         }
-        Spacer(Modifier.height(space.s))
-        MoonPhaseRow(state.recent, moonSize = 14.dp)
+        Spacer(Modifier.height(space.m))
+        FortnightRow(state.recent, state.date)
         Spacer(Modifier.height(space.m))
         AtlasButton("History", onOpenHistory, style = ActionStyle.Text, contentPadding = PaddingValues(0.dp))
         Spacer(Modifier.height(space.xxxl))
+    }
+    }
+}
+
+/** Fourteen moons with the weekday initial under each, today last. */
+@Composable
+private fun FortnightRow(phases: List<MoonPhase>, today: LocalDate) {
+    val c = Atlas.colors
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        phases.forEachIndexed { i, phase ->
+            val day = today.minusDays((phases.size - 1 - i).toLong())
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Moon(phase, size = 15.dp)
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    day.dayOfWeek.getDisplayName(java.time.format.TextStyle.NARROW, java.util.Locale.UK),
+                    style = Atlas.type.overline.copy(letterSpacing = Atlas.type.label.letterSpacing),
+                    color = if (i == phases.lastIndex) c.text else c.textSecondary,
+                )
+            }
+        }
     }
 }
 
@@ -194,7 +224,7 @@ fun FitnessScreen(
 private fun MainOrbit(line: ExerciseLine) {
     val c = Atlas.colors
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        OrbitRing(progress = line.fraction, diameter = 136.dp) {
+        OrbitRing(progress = line.fraction, diameter = 156.dp, graduations = 20, majorEvery = 5) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("${line.done}", style = Atlas.type.numeralLarge, color = c.text)
                 Text("of ${line.target}", style = Atlas.type.time, color = c.textSecondary)

@@ -1,6 +1,5 @@
 package app.camplanner.ui.checkin
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,8 +27,9 @@ import app.camplanner.designsystem.components.ChoiceRow
 import app.camplanner.designsystem.components.NumberEntry
 import app.camplanner.designsystem.components.OrbitRing
 import app.camplanner.designsystem.components.RuledRow
-import app.camplanner.designsystem.components.ScreenHeading
-import app.camplanner.designsystem.components.SectionHeader
+import app.camplanner.designsystem.components.Masthead
+import app.camplanner.designsystem.components.SectionTitle
+import app.camplanner.designsystem.components.StarFieldBackground
 import app.camplanner.designsystem.components.SubjectMark
 import app.camplanner.designsystem.theme.Atlas
 import app.camplanner.model.ExerciseUnit
@@ -82,19 +82,28 @@ fun CheckInScreen(
     modifier: Modifier = Modifier,
 ) {
     val space = Atlas.space
+    val c = Atlas.colors
+    StarFieldBackground(modifier.fillMaxSize(), starsPer10k = 0.6f) {
     Column(
-        modifier
+        Modifier
             .fillMaxSize()
-            .background(Atlas.colors.background)
             .windowInsetsPadding(WindowInsets.statusBars)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = space.gutter),
     ) {
+        Spacer(Modifier.height(space.l))
+        Masthead(left = "The Evening Ledger", right = Formats.romanYear(state.date))
+        Spacer(Modifier.height(space.l))
+        Text("${Formats.weekday(state.date)}, ${Formats.dayMonth(state.date)}", style = Atlas.type.dateline, color = c.textSecondary)
+        Text("The Day in Review", style = Atlas.type.display, color = c.text)
+        Spacer(Modifier.height(space.xs))
+        Text("Quid hodie egisti?", style = Atlas.type.aside, color = c.textSecondary)
+
         Spacer(Modifier.height(space.xl))
-        ScreenHeading(title = "The day in review", overline = "${Formats.weekday(state.date)} ${Formats.dayMonth(state.date)}")
+        Tally(state)
         Spacer(Modifier.height(space.xl))
 
-        SectionHeader("Reading") {
+        SectionTitle("I", "Reading") {
             Text("target ${state.readingMin}–${state.readingMax} pp", style = Atlas.type.time, color = Atlas.colors.textSecondary)
         }
         if (state.reading.isEmpty()) {
@@ -108,7 +117,7 @@ fun CheckInScreen(
         }
 
         Spacer(Modifier.height(space.xl))
-        SectionHeader("Homework") {
+        SectionTitle("II", "Homework") {
             Text("next 3 days", style = Atlas.type.time, color = Atlas.colors.textSecondary)
         }
         if (state.homework.isEmpty()) {
@@ -120,7 +129,7 @@ fun CheckInScreen(
         }
 
         Spacer(Modifier.height(space.xl))
-        SectionHeader("Fitness")
+        SectionTitle("III", "Exercise")
         when {
             state.isRestDay -> Quiet("Rest day. Nothing is owed.")
             state.fitness.isEmpty() -> Quiet("Every target met today.")
@@ -138,6 +147,46 @@ fun CheckInScreen(
         )
         Spacer(Modifier.height(space.xxxl))
     }
+    }
+}
+
+/** The day's reckoning at a glance: three small instruments, one per section. */
+@Composable
+private fun Tally(state: CheckInUiState) {
+    val c = Atlas.colors
+    val readingMet = state.reading.count { (it.pagesText.toIntOrNull() ?: 0) >= state.readingMin }
+    val homeworkDone = state.homework.count { it.done }
+    val owed = state.fitness.size
+    fun ratio(done: Int, total: Int) = if (total == 0) 1f else done / total.toFloat()
+    data class Dial(val label: String, val fraction: Float, val text: String, val numeric: Boolean)
+    val dials = listOf(
+        Dial("Reading", ratio(readingMet, state.reading.size), "$readingMet/${state.reading.size}", true),
+        Dial("Homework", ratio(homeworkDone, state.homework.size), "$homeworkDone/${state.homework.size}", true),
+        when {
+            state.isRestDay -> Dial("Exercise", 1f, "rest", false)
+            owed == 0 -> Dial("Exercise", 1f, "done", false)
+            else -> Dial("Exercise", 0.5f, "$owed owed", false)
+        },
+    )
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        dials.forEach { d ->
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                val complete = d.fraction >= 1f
+                OrbitRing(
+                    progress = d.fraction, diameter = 92.dp, graduations = 24, majorEvery = 6,
+                    color = if (complete) c.gold else c.accent, showBody = !complete,
+                ) {
+                    Text(
+                        d.text,
+                        style = if (d.numeric) Atlas.type.numeral.copy(fontSize = Atlas.type.title.fontSize) else Atlas.type.aside,
+                        color = c.text,
+                    )
+                }
+                Spacer(Modifier.height(Atlas.space.s))
+                Text(d.label.uppercase(), style = Atlas.type.overline, color = c.textSecondary)
+            }
+        }
+    }
 }
 
 @Composable
@@ -152,16 +201,18 @@ private fun ReadingRow(entry: ReadingEntry, min: Int, max: Int, last: Boolean, o
     RuledRow(showRule = !last) {
         OrbitRing(
             progress = pages / max.toFloat(),
-            diameter = 40.dp,
+            diameter = 48.dp,
             markFraction = min / max.toFloat(),
             color = if (met) Atlas.colors.gold else Atlas.colors.accent,
             arcWidth = 1.5.dp,
             showBody = false,
+            graduations = 10,
+            majorEvery = 10,
         )
         Column(Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 SubjectMark(Atlas.colors.subject(entry.colorIndex))
-                Text(entry.name, style = Atlas.type.body, color = Atlas.colors.text, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(entry.name, style = Atlas.type.title, color = Atlas.colors.text, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             Text(
                 when {
@@ -181,7 +232,7 @@ private fun ReadingRow(entry: ReadingEntry, min: Int, max: Int, last: Boolean, o
 private fun HomeworkRow(hw: HomeworkEntry, today: LocalDate, last: Boolean, onDone: (Boolean) -> Unit) {
     RuledRow(showRule = !last) {
         Column(Modifier.weight(1f)) {
-            Text(hw.title, style = Atlas.type.body, color = Atlas.colors.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(hw.title, style = Atlas.type.title, color = Atlas.colors.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 if (hw.subjectColor != null) SubjectMark(Atlas.colors.subject(hw.subjectColor))
                 if (hw.subject != null) {
@@ -209,7 +260,7 @@ private fun FitnessRow(gap: FitnessGap, last: Boolean, onLog: () -> Unit) {
     RuledRow(showRule = !last) {
         OrbitRing(progress = gap.done / gap.target.toFloat(), diameter = 28.dp, showBody = false)
         Column(Modifier.weight(1f)) {
-            Text(gap.name, style = Atlas.type.body, color = Atlas.colors.text)
+            Text(gap.name, style = Atlas.type.title, color = Atlas.colors.text)
             Text(
                 "${gap.done}$unit of ${gap.target}$unit  ·  ${gap.remaining}$unit to go",
                 style = Atlas.type.time,

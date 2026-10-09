@@ -61,7 +61,10 @@ fun AtlasButton(
         .clip(shape)
         .let {
             when (style) {
+                // A printed plate: burgundy ground with a fine inner frame.
                 ActionStyle.Filled -> it.background(if (enabled) c.accentFill else c.surface)
+                    .padding(3.dp)
+                    .border(1.dp, c.text.copy(alpha = if (enabled) 0.28f else 0.1f), RoundedCornerShape(1.dp))
                 ActionStyle.Outlined -> it.border(1.dp, if (enabled) c.accent else c.hairline, shape)
                 ActionStyle.Text -> it
             }
