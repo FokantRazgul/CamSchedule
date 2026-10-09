@@ -90,7 +90,11 @@ class EventViewModel(private val graph: DataGraph, private val id: Long, newDate
             event = event,
             subject = subjects.firstOrNull { it.id == event.subjectId },
             leg = graph.routes.legFor(event.id),
-            located = loc?.let { it.status == LocationStatus.GEOCODED.name || it.status == LocationStatus.MANUAL.name },
+            located = when (loc?.status) {
+                LocationStatus.GEOCODED.name, LocationStatus.MANUAL.name -> true
+                LocationStatus.NOT_FOUND.name -> false
+                else -> null // still being looked up
+            },
             defaultMode = settings.defaultTravelMode,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)

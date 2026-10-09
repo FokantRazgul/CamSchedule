@@ -97,8 +97,9 @@ fun StatsScreen(ui: StatsUi, onBack: () -> Unit) {
     val c = Atlas.colors
     val s = ui.snapshot
     AtlasPage(
-        mastheadLeft = ui.termLabel ?: "Statistics",
-        mastheadRight = "${Formats.shortDate(s.term.start)} to ${Formats.shortDate(s.term.endInclusive)}",
+        mastheadLeft = "Statistics",
+        mastheadRight = "${Formats.dayMonthShort(s.term.start)} – ${Formats.dayMonthShort(s.term.endInclusive)}",
+        dateline = ui.termLabel,
         title = "The Reckoning",
         aside = "This week and this term, in pages, sheets, repetitions and miles.",
         onBack = onBack,
@@ -106,8 +107,9 @@ fun StatsScreen(ui: StatsUi, onBack: () -> Unit) {
     ) {
         // Headline instruments.
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Instrument("Reading streak", s.readingStreak.toString(), "days")
-            Instrument("Exercise streak", s.fitnessStreak.toString(), "best ${s.fitnessBestStreak}")
+            // Streak rings close after a week.
+            Instrument("Reading streak", s.readingStreak.toString(), "days", s.readingStreak / 7f)
+            Instrument("Exercise streak", s.fitnessStreak.toString(), "best ${s.fitnessBestStreak}", s.fitnessStreak / 7f)
             Instrument("Run this week", Formats.km(s.runKmWeek), "of ${Formats.km(ui.weeklyRunTarget)} km", (s.runKmWeek / ui.weeklyRunTarget).toFloat())
         }
 
@@ -163,12 +165,12 @@ fun StatsScreen(ui: StatsUi, onBack: () -> Unit) {
 }
 
 @Composable
-private fun Instrument(label: String, value: String, detail: String, fraction: Float? = null) {
+private fun Instrument(label: String, value: String, detail: String, fraction: Float) {
     val c = Atlas.colors
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         OrbitRing(
-            progress = fraction ?: 1f, diameter = 96.dp, graduations = 24, majorEvery = 6,
-            color = c.gold, showBody = fraction != null && fraction < 1f,
+            progress = fraction, diameter = 96.dp, graduations = 24, majorEvery = 6,
+            color = c.gold, showBody = fraction in 0.01f..0.99f,
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(value, style = Atlas.type.numeral, color = c.text)

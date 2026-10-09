@@ -33,5 +33,16 @@ class PreviewRenders {
 
     @Test fun fitness() = render("3-fitness", 1360) { FitnessPreview() }
 
+    @Test fun alarm() = render("4-alarm", 860) {
+        app.camplanner.designsystem.theme.CamPlannerTheme {
+            app.camplanner.alarms.AlarmContent(
+                firstEngagement = "Vectors & Matrices at 09:00, Mill Lane Lecture Rooms",
+                snoozeMinutes = 9, onSnooze = {}, onDismiss = {},
+                now = java.time.LocalTime.of(7, 30), today = java.time.LocalDate.of(2026, 10, 20),
+                zone = java.time.ZoneId.of("Europe/London"),
+            )
+        }
+    }
+
     @Test fun designSystem() = render("0-design-system", 900) { DesignSystemSheet() }
 }

@@ -43,7 +43,9 @@ import app.camplanner.ui.stats.StatsRoute
 import app.camplanner.ui.subjects.SubjectsRoute
 import app.camplanner.ui.today.TodayRoute
 import app.camplanner.ui.week.WeekRoute
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.first
 import java.time.LocalDate
 
@@ -76,7 +78,10 @@ fun CamPlannerNav(deepLink: StateFlow<String?>, onDeepLinkHandled: () -> Unit) {
     LaunchedEffect(Unit) {
         if (!app.graph.settings.permissionsSeen.first()) {
             app.graph.settings.setPermissionsSeen()
-            if (!AlarmPermissions.status(context).essentialsGranted) nav.navigate("permissions")
+            // DataStore may resume us on its own thread; navigation must happen on the main thread.
+            withContext(Dispatchers.Main) {
+                if (!AlarmPermissions.status(context).essentialsGranted) nav.navigate("permissions")
+            }
         }
     }
 

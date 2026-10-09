@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Launcher icon only; mirrors the ink and gold design tokens. -->
+    <color name="icon_ground">#FF0B0D14</color>
+    <color name="icon_gold">#FFC2A25A</color>
+</resources>

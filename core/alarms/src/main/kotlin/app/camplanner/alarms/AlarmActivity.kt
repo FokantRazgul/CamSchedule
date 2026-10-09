@@ -40,7 +40,6 @@ import app.camplanner.designsystem.theme.CamPlannerTheme
 import app.camplanner.domain.Almanac
 import app.camplanner.domain.Roman
 import kotlinx.coroutines.delay
-import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
@@ -89,15 +88,15 @@ fun AlarmContent(
     onDismiss: () -> Unit,
     now: LocalTime? = null,
     today: LocalDate? = null,
+    zone: ZoneId = ZoneId.systemDefault(),
 ) {
     val c = Atlas.colors
     val clock by produceState(now ?: LocalTime.now()) {
         if (now == null) while (true) { value = LocalTime.now(); delay(1_000) }
     }
     val date = today ?: LocalDate.now()
-    val zone = ZoneId.systemDefault()
     val sun = Almanac.sunTimes(date, Almanac.CAMBRIDGE_LAT, Almanac.CAMBRIDGE_LNG)
-    val moon = Almanac.moon(Instant.now())
+    val moon = Almanac.moon(date.atTime(21, 0).atZone(zone).toInstant())
     val hm = DateTimeFormatter.ofPattern("HH:mm", Locale.UK)
 
     StarFieldBackground(Modifier.fillMaxSize(), starsPer10k = 1.6f) {

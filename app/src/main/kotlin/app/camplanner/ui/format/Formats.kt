@@ -13,11 +13,13 @@ object Formats {
     private val dayMonthFmt = DateTimeFormatter.ofPattern("d MMMM", locale)
     private val weekdayFmt = DateTimeFormatter.ofPattern("EEEE", locale)
     private val shortDateFmt = DateTimeFormatter.ofPattern("EEE d MMM", locale)
+    private val dayMonthShortFmt = DateTimeFormatter.ofPattern("d MMM", locale)
 
     fun time(t: LocalTime): String = timeFmt.format(t)
     fun dayMonth(d: LocalDate): String = dayMonthFmt.format(d)
     fun weekday(d: LocalDate): String = weekdayFmt.format(d)
     fun shortDate(d: LocalDate): String = shortDateFmt.format(d)
+    fun dayMonthShort(d: LocalDate): String = dayMonthShortFmt.format(d)
 
     /** "MMXXVI" */
     fun romanYear(d: LocalDate): String = app.camplanner.domain.Roman.of(d.year)
