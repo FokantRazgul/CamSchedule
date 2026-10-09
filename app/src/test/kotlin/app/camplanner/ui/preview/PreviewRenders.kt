@@ -16,7 +16,8 @@ import org.robolectric.annotation.GraphicsMode
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(qualifiers = "w393dp-h960dp-xxhdpi")
+// Plain Application: the renders are pure UI and must not start WorkManager or alarms.
+@Config(qualifiers = "w393dp-h960dp-xxhdpi", application = android.app.Application::class)
 class PreviewRenders {
 
     private fun render(name: String, heightDp: Int, content: @Composable () -> Unit) {

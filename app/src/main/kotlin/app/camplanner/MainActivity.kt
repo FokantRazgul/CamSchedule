@@ -1,51 +1,40 @@
 package app.camplanner
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import app.camplanner.designsystem.components.AtlasNavBar
-import app.camplanner.designsystem.components.NavItem
+import app.camplanner.alarms.AlarmContract
 import app.camplanner.designsystem.theme.CamPlannerTheme
-import app.camplanner.ui.checkin.CheckInScreen
-import app.camplanner.ui.fitness.FitnessScreen
-import app.camplanner.ui.preview.SampleData
-import app.camplanner.ui.today.TodayScreen
+import app.camplanner.ui.CamPlannerNav
+import kotlinx.coroutines.flow.MutableStateFlow
 
-/**
- * Design-review build: shows the three approved-for-review screens with sample data.
- * Navigation, data and alarms are wired up after the design is signed off.
- */
+/** The single activity; every screen is a Compose destination. */
 class MainActivity : ComponentActivity() {
+    private val deepLink = MutableStateFlow<String?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        if (savedInstanceState == null) handle(intent)
         setContent {
             CamPlannerTheme {
-                var tab by rememberSaveable { mutableStateOf("today") }
-                Column(Modifier.fillMaxSize()) {
-                    Box(Modifier.weight(1f)) {
-                        when (tab) {
-                            "today" -> TodayScreen(SampleData.today, {}, {}, { tab = "checkin" }, {})
-                            "checkin" -> CheckInScreen(SampleData.checkIn, { _, _ -> }, { _, _ -> }, {}, {})
-                            else -> FitnessScreen(SampleData.fitness, {}, { _, _ -> }, {}, {}, {}, {}, {})
-                        }
-                    }
-                    AtlasNavBar(
-                        items = listOf(NavItem("today", "Today"), NavItem("checkin", "Check-in"), NavItem("fitness", "Fitness")),
-                        selected = tab,
-                        onSelect = { tab = it },
-                    )
-                }
+                CamPlannerNav(deepLink, onDeepLinkHandled = { deepLink.value = null })
             }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handle(intent)
+    }
+
+    private fun handle(intent: Intent?) {
+        if (intent?.action != AlarmContract.ACTION_OPEN) return
+        deepLink.value = when (val route = intent.getStringExtra(AlarmContract.EXTRA_ROUTE)) {
+            null, AlarmContract.ROUTE_TODAY -> "today"
+            else -> route
         }
     }
 }

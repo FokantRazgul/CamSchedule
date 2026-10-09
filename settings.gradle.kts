@@ -28,4 +28,6 @@ include(
     ":core:domain",
     ":core:ics",
     ":core:designsystem",
+    ":core:data",
+    ":core:alarms",
 )

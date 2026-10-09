@@ -121,7 +121,7 @@ fun TodayScreen(
 
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(
-                    (state.termLabel ?: "Vacation").uppercase(),
+                    (state.termLabel ?: "").uppercase(),
                     style = Atlas.type.overline, color = c.rubric, modifier = Modifier.weight(1f),
                 )
                 Text(Formats.romanYear(state.date), style = Atlas.type.overline, color = c.textSecondary)
