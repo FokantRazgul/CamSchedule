@@ -29,39 +29,17 @@ private const val TABULAR = "lnum, tnum"
 
 private val trim = LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.Both)
 
+/**
+ * Serif (Cormorant) only for titles and big numbers; sans (Hanken Grotesk) for everything you
+ * read or tap.
+ */
 @Immutable
 data class AtlasType(
-    /** Big serif numerals inside rings and on the stats page. */
-    val numeralLarge: TextStyle,
-    val numeral: TextStyle,
-    /** Screen titles: "Tuesday, 20 October". */
-    val display: TextStyle,
-    val headline: TextStyle,
-    /** Event and section titles. */
-    val title: TextStyle,
-    /** Italic serif for asides: free time, quiet empty states. */
-    val aside: TextStyle,
-    val body: TextStyle,
-    val bodySmall: TextStyle,
-    val label: TextStyle,
-    /** Spaced small capitals for section headings, like an almanac's running heads. */
-    val overline: TextStyle,
-    /** Italic serif section titles: "Reading", "The Order of the Day". */
-    val sectionTitle: TextStyle,
-    /** Roman section numerals, set in the rubric colour. */
-    val rubric: TextStyle,
-    /** Italic serif weekday above the date. */
-    val dateline: TextStyle,
-    /** Times of day and durations. */
-    val time: TextStyle,
-
-    // --- Reading sizes: sans-serif for everything you read or tap; serif only for titles and big numbers.
-
-    /** Large screen title: "Tuesday 20 October", "Fitness". */
+    /** Large screen title: "Sunday 11 October", "Fitness". */
     val screenTitle: TextStyle = TextStyle(fontFamily = Cormorant, fontWeight = FontWeight.SemiBold, fontSize = 36.sp, lineHeight = 40.sp, fontFeatureSettings = TABULAR),
-    /** The title inside the hero card. */
+    /** The title inside the hero card and on sheets. */
     val heroTitle: TextStyle = TextStyle(fontFamily = Cormorant, fontWeight = FontWeight.SemiBold, fontSize = 30.sp, lineHeight = 34.sp, fontFeatureSettings = TABULAR),
-    /** Big counts in rings and tiles. */
+    /** Big counts: the alarm clock face. */
     val heroNumber: TextStyle = TextStyle(fontFamily = Cormorant, fontWeight = FontWeight.SemiBold, fontSize = 44.sp, lineHeight = 44.sp, fontFeatureSettings = TABULAR, lineHeightStyle = trim),
     /** Group headings: "Schedule", "Today's sets". */
     val groupTitle: TextStyle = TextStyle(fontFamily = Hanken, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, lineHeight = 22.sp),
@@ -77,55 +55,4 @@ data class AtlasType(
     val caption: TextStyle = TextStyle(fontFamily = Hanken, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, lineHeight = 18.sp, letterSpacing = 0.02.em, fontFeatureSettings = "tnum"),
 )
 
-val DefaultAtlasType = AtlasType(
-    numeralLarge = TextStyle(
-        fontFamily = Cormorant, fontWeight = FontWeight.Medium, fontSize = 52.sp, lineHeight = 52.sp,
-        fontFeatureSettings = TABULAR, lineHeightStyle = trim,
-    ),
-    numeral = TextStyle(
-        fontFamily = Cormorant, fontWeight = FontWeight.Medium, fontSize = 30.sp, lineHeight = 32.sp,
-        fontFeatureSettings = TABULAR, lineHeightStyle = trim,
-    ),
-    display = TextStyle(
-        fontFamily = Cormorant, fontWeight = FontWeight.Medium, fontSize = 48.sp, lineHeight = 50.sp,
-        letterSpacing = (-0.005).em, fontFeatureSettings = TABULAR,
-    ),
-    headline = TextStyle(
-        fontFamily = Cormorant, fontWeight = FontWeight.Medium, fontSize = 28.sp, lineHeight = 32.sp,
-        fontFeatureSettings = TABULAR,
-    ),
-    title = TextStyle(
-        fontFamily = Cormorant, fontWeight = FontWeight.SemiBold, fontSize = 21.sp, lineHeight = 25.sp,
-        fontFeatureSettings = TABULAR,
-    ),
-    aside = TextStyle(
-        fontFamily = Cormorant, fontStyle = FontStyle.Italic, fontSize = 17.sp, lineHeight = 22.sp,
-        fontFeatureSettings = TABULAR,
-    ),
-    body = TextStyle(fontFamily = Hanken, fontWeight = FontWeight.Normal, fontSize = 15.sp, lineHeight = 22.sp),
-    bodySmall = TextStyle(fontFamily = Hanken, fontWeight = FontWeight.Normal, fontSize = 13.sp, lineHeight = 18.sp),
-    label = TextStyle(
-        fontFamily = Hanken, fontWeight = FontWeight.Medium, fontSize = 13.sp, lineHeight = 16.sp,
-        letterSpacing = 0.01.em,
-    ),
-    overline = TextStyle(
-        fontFamily = Hanken, fontWeight = FontWeight.Medium, fontSize = 10.5.sp, lineHeight = 14.sp,
-        letterSpacing = 0.22.em,
-    ),
-    sectionTitle = TextStyle(
-        fontFamily = Cormorant, fontStyle = FontStyle.Italic, fontSize = 25.sp, lineHeight = 28.sp,
-        fontFeatureSettings = TABULAR,
-    ),
-    rubric = TextStyle(
-        fontFamily = Cormorant, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, lineHeight = 20.sp,
-        letterSpacing = 0.06.em,
-    ),
-    dateline = TextStyle(
-        fontFamily = Cormorant, fontStyle = FontStyle.Italic, fontSize = 24.sp, lineHeight = 28.sp,
-        fontFeatureSettings = TABULAR,
-    ),
-    time = TextStyle(
-        fontFamily = Hanken, fontWeight = FontWeight.Medium, fontSize = 13.sp, lineHeight = 16.sp,
-        letterSpacing = 0.02.em, fontFeatureSettings = "tnum",
-    ),
-)
+val DefaultAtlasType = AtlasType()

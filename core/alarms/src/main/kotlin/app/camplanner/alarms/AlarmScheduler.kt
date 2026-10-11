@@ -85,8 +85,12 @@ class AlarmScheduler(context: Context) {
     }
 
     /** Snooze: ring again in [minutes], as a real alarm clock entry. */
-    suspend fun snooze(minutes: Int) {
-        val at = Instant.now().plus(Duration.ofMinutes(minutes.toLong()))
+    suspend fun snooze(minutes: Int) = ringAt(Instant.now().plus(Duration.ofMinutes(minutes.toLong())))
+
+    /** "Test the alarm": rings in [seconds] through exactly the same path as a real morning. */
+    suspend fun test(seconds: Long = 10) = ringAt(Instant.now().plusSeconds(seconds))
+
+    private suspend fun ringAt(at: Instant) {
         val intent = AlarmContract.alarmIntent(appContext, AlarmContract.SNOOZE_KEY, AlarmContract.KIND_SNOOZE, null, 0)
         val pi = PendingIntent.getBroadcast(
             appContext, AlarmContract.SNOOZE_KEY.hashCode(), intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,

@@ -78,17 +78,20 @@ class AlarmReceiver : BroadcastReceiver() {
     private suspend fun reminder(context: Context, eventId: Long) {
         val event = DataGraph.get(context).timetable.event(eventId) ?: return
         val text = listOfNotNull("At ${time(event.start)}", event.location).joinToString(" · ")
-        val n = Notifications.simple(
+        val builder = Notifications.simple(
             context, Notifications.CHANNEL_REMINDER, event.title, text,
             AlarmContract.openApp(context, AlarmContract.routeEvent(eventId), ("reminder$eventId").hashCode()),
-        ).build()
-        Notifications.post(context, ("reminder$eventId").hashCode(), n)
+        )
+        DataGraph.get(context).routes.directionsUrl(eventId)?.let { url ->
+            builder.addAction(Notifications.routeAction(context, url, ("rroute$eventId").hashCode()))
+        }
+        Notifications.post(context, ("reminder$eventId").hashCode(), builder.build())
     }
 
     private suspend fun checkIn(context: Context, date: LocalDate) {
         val n = Notifications.simple(
-            context, Notifications.CHANNEL_CHECK_IN, "The day in review",
-            "Pages read, homework due and what is left of today's exercise.",
+            context, Notifications.CHANNEL_CHECK_IN, "Evening review",
+            "Log today's reading, tick off homework and see what exercise is left.",
             AlarmContract.openApp(context, AlarmContract.ROUTE_CHECK_IN, CHECK_IN_ID),
         ).build()
         Notifications.post(context, CHECK_IN_ID + date.dayOfYear, n)
@@ -101,11 +104,15 @@ class AlarmReceiver : BroadcastReceiver() {
         if (!Fitness.needsMiddayNudge(progress)) return
         val upper = progress.filter { it.exercise.builtInKey in setOf("pushups", "pullups") }
         val text = upper.joinToString("  ·  ") { "${it.exercise.name} ${it.done} of ${it.target}" }
-        val n = Notifications.simple(
+        val builder = Notifications.simple(
             context, Notifications.CHANNEL_NUDGE, "Halfway through the day", text,
             AlarmContract.openApp(context, AlarmContract.ROUTE_FITNESS, NUDGE_ID),
-        ).build()
-        Notifications.post(context, NUDGE_ID, n)
+        )
+        // Log straight from the notification, without opening the app.
+        upper.filter { it.remaining > 0 }.forEach { p ->
+            builder.addAction(0, "+10 ${p.exercise.name.lowercase()}", QuickActionReceiver.logSet(context, p.exercise.id, 10))
+        }
+        Notifications.post(context, NUDGE_ID, builder.build())
     }
 
     private fun time(i: java.time.Instant): String =
@@ -114,6 +121,6 @@ class AlarmReceiver : BroadcastReceiver() {
     companion object {
         private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         private const val CHECK_IN_ID = 7_000
-        private const val NUDGE_ID = 8_000
+        const val NUDGE_ID = 8_000
     }
 }

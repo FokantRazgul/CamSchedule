@@ -59,6 +59,7 @@ class SettingsStore(context: Context) {
         val importCount = intPreferencesKey("import_count")
         val permissionsSeen = booleanPreferencesKey("permissions_seen")
         val skippedMornings = stringSetPreferencesKey("skipped_mornings")
+        val setupHidden = booleanPreferencesKey("setup_hidden")
     }
 
     val settings: Flow<AppSettings> = store.data.map(::read)
@@ -73,6 +74,11 @@ class SettingsStore(context: Context) {
     val permissionsSeen: Flow<Boolean> = store.data.map { it[K.permissionsSeen] ?: false }
 
     suspend fun setPermissionsSeen() = store.edit { it[K.permissionsSeen] = true }
+
+    /** The first-run checklist on Today, once the user has dismissed it. */
+    val setupHidden: Flow<Boolean> = store.data.map { it[K.setupHidden] ?: false }
+
+    suspend fun setSetupHidden(hidden: Boolean) = store.edit { it[K.setupHidden] = hidden }
 
     suspend fun recordImport(info: ImportInfo) = store.edit {
         it[K.importFile] = info.fileName

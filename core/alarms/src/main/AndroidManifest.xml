@@ -20,6 +20,10 @@
             android:exported="false" />
 
         <receiver
+            android:name=".QuickActionReceiver"
+            android:exported="false" />
+
+        <receiver
             android:name=".SystemEventsReceiver"
             android:exported="false">
             <intent-filter>

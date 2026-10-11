@@ -62,24 +62,3 @@ private fun DrawScope.drawCrescent(color: Color, r: Float) {
     val shadow = Path().apply { addOval(Rect(Offset(center.x - r * 0.55f, center.y), r)) }
     drawPath(Path.combine(PathOperation.Difference, disc, shadow), color)
 }
-
-/**
- * The last N days as moon phases, oldest first. Reads like the phase strip along the bottom of
- * an almanac page.
- */
-@Composable
-fun MoonPhaseRow(
-    phases: List<MoonPhase>,
-    modifier: Modifier = Modifier,
-    moonSize: Dp = 12.dp,
-    description: String? = null,
-) {
-    Row(
-        modifier = modifier.semantics {
-            contentDescription = description ?: "${phases.count { it == MoonPhase.FULL }} of ${phases.size} days met"
-        },
-        horizontalArrangement = Arrangement.spacedBy(moonSize * 0.55f),
-    ) {
-        phases.forEach { Moon(it, size = moonSize) }
-    }
-}

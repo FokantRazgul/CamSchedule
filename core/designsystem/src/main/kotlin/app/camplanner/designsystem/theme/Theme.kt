@@ -19,7 +19,7 @@ val LocalAtlasColors = staticCompositionLocalOf { DarkAtlasColors }
 val LocalAtlasType = staticCompositionLocalOf { DefaultAtlasType }
 val LocalAtlasSpacing = staticCompositionLocalOf { AtlasSpacing() }
 
-/** Accessors: `Atlas.colors.gold`, `Atlas.type.title`, `Atlas.space.gutter`. */
+/** Accessors: `Atlas.colors.gold`, `Atlas.type.itemTitle`, `Atlas.space.gutter`. */
 object Atlas {
     val colors: AtlasColors
         @Composable @ReadOnlyComposable get() = LocalAtlasColors.current
@@ -72,22 +72,23 @@ internal fun atlasColorScheme(c: AtlasColors): ColorScheme = darkColorScheme(
     surfaceContainerHighest = c.surfaceHigh,
 )
 
+/** Material components that we don't restyle (dialogs, pickers) read these. */
 internal fun atlasTypography(t: AtlasType): Typography = Typography(
-    displayLarge = t.numeralLarge,
-    displayMedium = t.display,
-    displaySmall = t.headline,
-    headlineLarge = t.display,
-    headlineMedium = t.headline,
-    headlineSmall = t.title,
-    titleLarge = t.title,
-    titleMedium = t.body.copy(fontWeight = t.label.fontWeight),
-    titleSmall = t.label,
-    bodyLarge = t.body,
-    bodyMedium = t.body,
-    bodySmall = t.bodySmall,
-    labelLarge = t.label,
-    labelMedium = t.label,
-    labelSmall = t.overline,
+    displayLarge = t.heroNumber,
+    displayMedium = t.screenTitle,
+    displaySmall = t.heroTitle,
+    headlineLarge = t.screenTitle,
+    headlineMedium = t.heroTitle,
+    headlineSmall = t.groupTitle,
+    titleLarge = t.groupTitle,
+    titleMedium = t.itemTitle,
+    titleSmall = t.button,
+    bodyLarge = t.reading,
+    bodyMedium = t.reading,
+    bodySmall = t.supporting,
+    labelLarge = t.button,
+    labelMedium = t.caption,
+    labelSmall = t.caption,
 )
 
 @Composable

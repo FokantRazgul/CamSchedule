@@ -1,44 +1,77 @@
 package app.camplanner.ui.more
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Alarm
+import androidx.compose.material.icons.outlined.BarChart
+import androidx.compose.material.icons.outlined.Bedtime
+import androidx.compose.material.icons.outlined.Category
+import androidx.compose.material.icons.outlined.FileDownload
+import androidx.compose.material.icons.outlined.Place
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Tune
+import androidx.compose.material.icons.automirrored.outlined.DirectionsRun
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
-import app.camplanner.designsystem.components.AtlasPage
-import app.camplanner.designsystem.components.IndexRow
-import app.camplanner.domain.Roman
-import java.time.LocalDate
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
+import app.camplanner.designsystem.kit.Group
+import app.camplanner.designsystem.kit.GroupDivider
+import app.camplanner.designsystem.kit.GroupHeader
+import app.camplanner.designsystem.kit.ItemRow
+import app.camplanner.designsystem.kit.LargeHeader
+import app.camplanner.designsystem.theme.Atlas
+import app.camplanner.ui.common.TabPage
 
-data class MoreDestinations(
-    val checkIn: () -> Unit,
+/** Where each row of the More tab leads. */
+data class MoreLinks(
     val stats: () -> Unit,
-    val subjects: () -> Unit,
-    val locations: () -> Unit,
-    val import: () -> Unit,
+    val review: () -> Unit,
+    val runs: () -> Unit,
     val exercises: () -> Unit,
+    val import: () -> Unit,
+    val subjects: () -> Unit,
+    val places: () -> Unit,
     val settings: () -> Unit,
     val permissions: () -> Unit,
 )
 
-/** The index of everything not on the bottom bar. */
 @Composable
-fun MoreScreen(go: MoreDestinations) {
-    AtlasPage(
-        mastheadLeft = "Cam Planner",
-        mastheadRight = Roman.of(LocalDate.now().year),
-        title = "Index",
-        aside = "Everything else, in order.",
-        graticule = true,
-    ) {
-        val rows = listOf(
-            Triple("The Evening Review", "Reading, homework and exercise for today", go.checkIn),
-            Triple("The Reckoning", "Statistics for the week and the term", go.stats),
-            Triple("Subjects", "Rename, merge, mark academic", go.subjects),
-            Triple("The Gazetteer", "Places on the map", go.locations),
-            Triple("Import a Timetable", "From an .ics file", go.import),
-            Triple("Exercises", "Which ones, and how many", go.exercises),
-            Triple("Settings", "Home, alarms, targets, term", go.settings),
-            Triple("Permissions", "What the alarms need", go.permissions),
+fun MoreScreen(links: MoreLinks) {
+    TabPage(header = { LargeHeader("More") }) {
+        Section(
+            "You",
+            Entry("Statistics", "Streaks, pages, reps and kilometres", Icons.Outlined.BarChart, links.stats),
+            Entry("Evening review", "Reading, homework and fitness for today", Icons.Outlined.Bedtime, links.review),
+            Entry("Runs", "Every run, to correct or delete", Icons.AutoMirrored.Outlined.DirectionsRun, links.runs),
+            Entry("Exercises and targets", "What you do, how much, rest days", Icons.Outlined.Tune, links.exercises),
         )
-        rows.forEachIndexed { i, (title, detail, action) ->
-            IndexRow(Roman.of(i + 1), title, detail, action, showRule = i != rows.lastIndex)
+        Section(
+            "Timetable",
+            Entry("Import timetable", "From an .ics file", Icons.Outlined.FileDownload, links.import),
+            Entry("Subjects", "Rename, colour, merge, academic", Icons.Outlined.Category, links.subjects),
+            Entry("Places", "Correct where things are on the map", Icons.Outlined.Place, links.places),
+        )
+        Section(
+            "App",
+            Entry("Settings", "Home, alarm, alerts, term, backup", Icons.Outlined.Settings, links.settings),
+            Entry("Alarms and notifications", "Check the permissions", Icons.Outlined.Alarm, links.permissions),
+        )
+    }
+}
+
+private class Entry(val title: String, val detail: String, val icon: ImageVector, val onClick: () -> Unit)
+
+@Composable
+private fun Section(title: String, vararg entries: Entry) {
+    GroupHeader(title)
+    Group {
+        entries.forEachIndexed { i, e ->
+            ItemRow(
+                e.title, supporting = e.detail,
+                leading = { Icon(e.icon, null, tint = Atlas.colors.textSecondary) },
+                onClick = e.onClick,
+            )
+            if (i != entries.lastIndex) GroupDivider(inset = 56.dp)
         }
     }
 }

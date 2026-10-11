@@ -25,9 +25,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
@@ -336,15 +337,19 @@ fun AppChip(label: String, selected: Boolean, onClick: () -> Unit, modifier: Mod
 /** Burgundy "add" button floating above the tab bar. */
 @Composable
 fun AddButton(text: String, icon: ImageVector, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    ExtendedFloatingActionButton(
+    FloatingActionButton(
         onClick = onClick,
         modifier = modifier,
         containerColor = Atlas.colors.accentFill,
         contentColor = Atlas.colors.text,
         shape = RoundedCornerShape(18.dp),
-        icon = { Icon(icon, contentDescription = null) },
-        text = { Text(text, style = Atlas.type.button) },
-    )
+    ) {
+        Row(Modifier.padding(start = 16.dp, end = 20.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(icon, contentDescription = null)
+            Spacer(Modifier.width(10.dp))
+            Text(text, style = Atlas.type.button)
+        }
+    }
 }
 
 // --- Fields -----------------------------------------------------------------------------------
@@ -491,5 +496,128 @@ fun SheetBody(title: String, modifier: Modifier = Modifier, content: @Composable
         Text(title, style = Atlas.type.heroTitle.copy(fontSize = Atlas.type.heroTitle.fontSize * 0.9f), color = Atlas.colors.text)
         Spacer(Modifier.height(16.dp))
         content()
+    }
+}
+
+// --- Settings-style controls ------------------------------------------------------------------
+
+/** A themed switch: gold thumb when on, quiet when off. */
+@Composable
+fun AppSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit, modifier: Modifier = Modifier) {
+    val c = Atlas.colors
+    androidx.compose.material3.Switch(
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+        modifier = modifier,
+        colors = androidx.compose.material3.SwitchDefaults.colors(
+            checkedThumbColor = c.text,
+            checkedTrackColor = c.accentFill,
+            checkedBorderColor = c.accentFill,
+            uncheckedThumbColor = c.textSecondary,
+            uncheckedTrackColor = c.surfaceHigh,
+            uncheckedBorderColor = c.hairline,
+        ),
+    )
+}
+
+/** − value + for small numbers with a unit; long ranges move in [step]s. */
+@Composable
+fun Stepper(
+    value: Int,
+    onChange: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    step: Int = 1,
+    min: Int = 0,
+    max: Int = 999,
+    suffix: String = "",
+    description: String = "",
+) {
+    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
+        CountButton("−", { onChange((value - step).coerceAtLeast(min)) }, description = "Decrease $description")
+        Text(
+            "$value$suffix",
+            style = Atlas.type.itemTitle.copy(fontFeatureSettings = "tnum"),
+            color = Atlas.colors.text,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.width(72.dp),
+        )
+        CountButton("+", { onChange((value + step).coerceAtMost(max)) }, description = "Increase $description")
+    }
+}
+
+/** A row in a settings group: title and explanation on the left, a control on the right. */
+@Composable
+fun SettingRow(
+    title: String,
+    modifier: Modifier = Modifier,
+    supporting: String? = null,
+    onClick: (() -> Unit)? = null,
+    control: (@Composable RowScope.() -> Unit)? = null,
+) {
+    Row(
+        modifier
+            .fillMaxWidth()
+            .heightIn(min = 60.dp)
+            .let { if (onClick != null) it.clickable(role = Role.Button, onClick = onClick) else it }
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(title, style = Atlas.type.reading, color = Atlas.colors.text)
+            if (supporting != null) Text(supporting, style = Atlas.type.supporting, color = Atlas.colors.textSecondary)
+        }
+        if (control != null) {
+            Spacer(Modifier.width(12.dp))
+            Row(verticalAlignment = Alignment.CenterVertically, content = control)
+        }
+    }
+}
+
+/** A notice at the top of a page, with an action: missing permissions, nothing imported yet. */
+@Composable
+fun Banner(text: String, action: String, onAction: () -> Unit, modifier: Modifier = Modifier, icon: ImageVector? = null) {
+    val c = Atlas.colors
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = c.accentFill.copy(alpha = 0.22f),
+        border = BorderStroke(1.dp, c.accent.copy(alpha = 0.45f)),
+        onClick = onAction,
+    ) {
+        Row(Modifier.padding(start = 16.dp, end = 4.dp, top = 6.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+            if (icon != null) {
+                Icon(icon, contentDescription = null, tint = c.accentText, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(10.dp))
+            }
+            Text(text, style = Atlas.type.supporting.copy(fontSize = Atlas.type.reading.fontSize * 0.94f), color = c.text, modifier = Modifier.weight(1f))
+            TertiaryButton(action, onAction)
+        }
+    }
+}
+
+/** A quiet message for an empty group, with an optional action. */
+@Composable
+fun EmptyState(text: String, modifier: Modifier = Modifier, action: String? = null, onAction: () -> Unit = {}) {
+    Column(modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp)) {
+        Text(text, style = Atlas.type.reading, color = Atlas.colors.textSecondary)
+        if (action != null) TertiaryButton(action, onAction, modifier = Modifier.padding(top = 2.dp))
+    }
+}
+
+/** Top bar for pages opened from somewhere else: back arrow, title, optional actions. */
+@Composable
+fun SubPageBar(title: String, onBack: () -> Unit, modifier: Modifier = Modifier, actions: @Composable RowScope.() -> Unit = {}) {
+    Row(
+        modifier.fillMaxWidth().heightIn(min = 64.dp).padding(start = 4.dp, end = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        IconButton(onClick = onBack) {
+            Icon(androidx.compose.material.icons.Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Back", tint = Atlas.colors.text)
+        }
+        Text(
+            title, style = Atlas.type.heroTitle.copy(fontSize = Atlas.type.heroTitle.fontSize * 0.85f), color = Atlas.colors.text,
+            maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f).padding(start = 4.dp),
+        )
+        Row(verticalAlignment = Alignment.CenterVertically, content = actions)
     }
 }

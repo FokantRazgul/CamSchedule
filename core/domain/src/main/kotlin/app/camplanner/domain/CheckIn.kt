@@ -13,7 +13,7 @@ data class CheckInPlan(
     val date: LocalDate,
     /** Academic subjects that met today; each gets a "pages read" field. */
     val readingSubjects: List<Subject>,
-    /** Assignments due today or in the next [CheckIn.HOMEWORK_WINDOW_DAYS] days, earliest first. */
+    /** Overdue work still open, then assignments due within [CheckIn.HOMEWORK_WINDOW_DAYS] days, earliest first. */
     val homework: List<Assignment>,
     /** Active exercises still short of today's target; empty on a rest day. */
     val fitnessShortfall: List<ExerciseProgress>,
@@ -39,7 +39,7 @@ object CheckIn {
         val homework = assignments
             .filter {
                 val due = it.deadline.atZone(zone).toLocalDate()
-                !due.isBefore(date) && !due.isAfter(lastDay)
+                (!it.done && due.isBefore(date)) || (!due.isBefore(date) && !due.isAfter(lastDay))
             }
             .sortedBy { it.deadline }
         val rest = date.dayOfWeek in restDays

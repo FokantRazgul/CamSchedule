@@ -28,3 +28,17 @@ fun minuteTicker(): Flow<LocalDateTime> = flow {
         delay(((60 - now.second) * 1000L - now.nano / 1_000_000).coerceAtLeast(500))
     }
 }
+
+/** Writes settings and recalculates alarms, since nearly every setting can move one. */
+suspend fun DataGraph.updateSettings(change: (app.camplanner.model.AppSettings) -> app.camplanner.model.AppSettings) {
+    settings.update(change)
+    onScheduleChanged()
+}
+
+/** Opens a URL (Maps directions, links) outside the app. */
+fun android.content.Context.openUrl(url: String) {
+    startActivity(
+        android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
+            .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK),
+    )
+}

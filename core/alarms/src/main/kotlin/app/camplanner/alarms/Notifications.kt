@@ -29,7 +29,7 @@ object Notifications {
         val nm = context.getSystemService(NotificationManager::class.java)
         val channels = listOf(
             NotificationChannel(CHANNEL_ALARM, "Morning alarm", NotificationManager.IMPORTANCE_HIGH).apply {
-                description = "The full-screen alarm before your first engagement"
+                description = "The full-screen alarm before your first event of the day"
                 setSound(null, null) // The ringing service plays the alarm sound itself.
                 enableVibration(false)
             },
@@ -37,10 +37,10 @@ object Notifications {
                 description = "When to set off, with a route"
             },
             NotificationChannel(CHANNEL_REMINDER, "Reminders", NotificationManager.IMPORTANCE_DEFAULT).apply {
-                description = "A few minutes before each engagement"
+                description = "A few minutes before each event"
             },
             NotificationChannel(CHANNEL_CHECK_IN, "Evening review", NotificationManager.IMPORTANCE_DEFAULT).apply {
-                description = "The daily check-in after your last engagement"
+                description = "The evening review after your last event"
             },
             NotificationChannel(CHANNEL_NUDGE, "Midday nudge", NotificationManager.IMPORTANCE_LOW).apply {
                 description = "When push-ups and pull-ups are behind at midday"

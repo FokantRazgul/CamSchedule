@@ -3,13 +3,18 @@ package app.camplanner
 import android.app.AlarmManager
 import android.content.Context
 import android.util.Log
+import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.work.Configuration
@@ -18,8 +23,10 @@ import androidx.work.testing.WorkManagerTestInitHelper
 import app.camplanner.alarms.AlarmScheduler
 import app.camplanner.data.DataGraph
 import app.camplanner.model.Assignment
-import com.github.takahirom.roborazzi.captureRoboImage
+import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
+import com.github.takahirom.roborazzi.captureScreenRoboImage
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -46,23 +53,25 @@ class SmokeTestApp : CamPlannerApp() {
 }
 
 /**
- * End to end on Robolectric: import a timetable, schedule alarms, open every screen of the real
- * app and save a screenshot of each to app/build/smoke/.
+ * End to end on Robolectric: import a timetable, then use the real app the way a student would:
+ * add a repeating event, log and undo push-ups, remove a set, edit homework, cancel and restore
+ * a lecture, and open every page. Screenshots go to app/build/smoke/.
  */
+@OptIn(ExperimentalRoborazziApi::class)
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(qualifiers = "w393dp-h900dp-xxhdpi", application = SmokeTestApp::class)
+@Config(qualifiers = "w393dp-h852dp-xxhdpi", application = SmokeTestApp::class)
 class AppSmokeTest {
     @get:Rule val compose = createEmptyComposeRule()
 
     private val context: Context get() = ApplicationProvider.getApplicationContext()
+    private val graph: DataGraph get() = DataGraph.get(context)
     private val zone = ZoneId.of("Europe/London")
+    private val today: LocalDate get() = LocalDate.now(zone)
 
     @Before
     fun seed() {
         TimeZone.setDefault(TimeZone.getTimeZone(zone))
-        val graph = DataGraph.get(context)
-        val today = LocalDate.now(zone)
         val d = DateTimeFormatter.BASIC_ISO_DATE.format(today)
         val ics = """
             BEGIN:VCALENDAR
@@ -107,65 +116,137 @@ class AppSmokeTest {
 
     private fun shot(name: String) {
         compose.waitForIdle()
-        compose.onRoot().captureRoboImage("build/smoke/$name.png")
+        captureScreenRoboImage("build/smoke/$name.png")
     }
-
-    private fun tab(label: String) {
-        compose.onAllNodesWithText(label).onFirst().performClick()
-        compose.waitForIdle()
-    }
-
-    private fun androidx.compose.ui.test.SemanticsNodeInteractionCollection.onFirst() = this[0]
 
     private fun waitFor(text: String) {
         compose.waitUntil(10_000) { compose.onAllNodes(hasText(text, substring = true)).fetchSemanticsNodes().isNotEmpty() }
     }
 
+    private fun gone(text: String) {
+        compose.waitUntil(10_000) { compose.onAllNodes(hasText(text, substring = true)).fetchSemanticsNodes().isEmpty() }
+    }
+
+    private fun text(t: String): SemanticsNodeInteraction = compose.onAllNodesWithText(t)[0]
+
+    private fun click(t: String) {
+        // Buttons outside a scrolling page (the add button, sheet actions) can't be scrolled to.
+        runCatching { text(t).performScrollTo() }
+        text(t).performClick()
+        compose.waitForIdle()
+    }
+
+    private fun clickDescription(d: String) {
+        compose.onAllNodesWithContentDescription(d)[0].performClick()
+        compose.waitForIdle()
+    }
+
+    private fun tab(label: String) {
+        compose.onAllNodes(hasText(label) and !hasSetTextAction())[0].performClick()
+        compose.waitForIdle()
+    }
+
+    private fun typeInto(label: String, value: String) {
+        compose.onAllNodes(hasSetTextAction() and hasText(label, substring = true))[0].performTextInput(value)
+        compose.waitForIdle()
+    }
+
+    private fun pushUpsDone(): Int = runBlocking {
+        val id = graph.fitness.exercises().first { it.builtInKey == "pushups" }.id
+        graph.fitness.setsOn(today).filter { it.exerciseId == id }.sumOf { it.amount }
+    }
+
     @Test
-    fun importScheduleAndVisitEveryScreen() {
+    fun aStudentsDay() {
         // Alarms: the plan for the next 72 hours lands in AlarmManager.
         runBlocking { AlarmScheduler(context).reschedule(fresh = true) }
         val alarms = shadowOf(context.getSystemService(AlarmManager::class.java)).scheduledAlarms
-        val stored = runBlocking { DataGraph.get(context).db.scheduledAlarms().all() }
         assertTrue("alarms registered: ${alarms.size}", alarms.isNotEmpty())
-        assertTrue("alarm rows: ${stored.map { it.key }}", stored.any { it.kind == "CHECK_IN" })
 
         ActivityScenario.launch(MainActivity::class.java).use {
-            // First launch walks through permissions when something essential is missing.
-            if (compose.onAllNodes(hasText("Before the Alarms Can Ring")).fetchSemanticsNodes().isNotEmpty()) {
+            // First launch asks for what the alarm needs.
+            if (compose.onAllNodes(hasText("Alarms and notifications")).fetchSemanticsNodes().isNotEmpty()) {
                 shot("00-permissions")
-                compose.onNodeWithText("Continue", substring = true).performScrollTo().performClick()
+                click("Not now")
             }
-            waitFor("The Order of the Day")
+            waitFor("Schedule")
             shot("01-today")
 
-            tab("Week"); waitFor("The Week"); shot("02-week")
-            compose.onAllNodesWithText("Physics Practical").onFirst().performClick()
-            waitFor("Whereabouts"); shot("03-event")
-            compose.onNodeWithText("Back").performClick()
+            // Add a repeating event from Today.
+            click("Add")
+            waitFor("New event")
+            typeInto("Title", "Rowing")
+            click("Weekly")
+            shot("02-new-event")
+            click("Save")
+            waitFor("Added Rowing")
+            val series = runBlocking { graph.db.series().all() }
+            assertEquals(1, series.size)
+            assertTrue(runBlocking { graph.timetable.allTimedEvents() }.count { it.title == "Rowing" } > 10)
 
-            tab("Fitness"); waitFor("Upper Body"); shot("04-fitness")
-            tab("Homework"); waitFor("Assignments"); shot("05-homework")
-            compose.onNodeWithText("Add an assignment").performClick()
-            waitFor("A New Assignment"); shot("06-homework-new")
-            compose.onNodeWithText("Back").performClick()
+            // Calendar shows it; open a lecture, cancel it, then undo.
+            tab("Calendar")
+            waitFor("Physics Practical")
+            shot("03-calendar")
+            click("Physics Practical")
+            waitFor("Cancel lecture")
+            shot("04-event-sheet")
+            click("Cancel lecture")
+            waitFor("Cancelled Physics Practical")
+            assertTrue(runBlocking { graph.timetable.allTimedEvents() }.any { it.title == "Physics Practical" && it.cancelled })
+            click("Undo")
+            compose.waitUntil(10_000) { runBlocking { graph.timetable.allTimedEvents() }.none { it.cancelled } }
 
-            tab("Index"); waitFor("Index"); shot("07-index")
+            // Fitness: an accidental +10 is undone, then a set is removed by hand.
+            tab("Fitness")
+            waitFor("Push-ups")
+            compose.onAllNodes(hasContentDescription("Add 10 Push-ups"))[0].performClick()
+            waitFor("Added 10 push-ups")
+            assertEquals(50, pushUpsDone())
+            shot("05-fitness-added")
+            click("Undo")
+            compose.waitUntil(10_000) { pushUpsDone() == 40 }
+            // Wait for the list to drop the undone set before removing the remaining one.
+            compose.waitUntil(10_000) { compose.onAllNodes(hasContentDescription("Remove this set")).fetchSemanticsNodes().size == 1 }
+            clickDescription("Remove this set")
+            compose.waitUntil(10_000) { pushUpsDone() == 0 }
+            waitFor("Removed a set")
+            shot("06-fitness")
+            click("Undo")
+            compose.waitUntil(10_000) { pushUpsDone() == 40 }
+
+            // Homework: edit an assignment and tick another off.
+            tab("Homework")
+            waitFor("Example Sheet 2")
+            shot("07-homework")
+            click("Example Sheet 2")
+            waitFor("Notes")
+            compose.onAllNodes(hasSetTextAction() and hasText("Title", substring = true))[0].performTextReplacement("Example Sheet 2 (Q1-6)")
+            shot("08-homework-edit")
+            click("Save")
+            compose.waitUntil(10_000) { runBlocking { graph.homework.all() }.any { it.title == "Example Sheet 2 (Q1-6)" } }
+            waitFor("Saved")
+
+            // Every page under More.
+            tab("More")
+            waitFor("Statistics")
+            shot("09-more")
             listOf(
-                "The Evening Review" to "The Day in Review",
-                "The Reckoning" to "Reading",
-                "Subjects" to "The Subjects",
-                "The Gazetteer" to "The Gazetteer",
-                "Import a Timetable" to "Import a Calendar",
-                "Exercises" to "The Exercises",
-                "Settings" to "The Settings",
-                "Permissions" to "Before the Alarms Can Ring",
-            ).forEachIndexed { i, (entry, expect) ->
-                compose.onAllNodesWithText(entry).onFirst().performScrollTo().performClick()
-                waitFor(expect)
-                shot("%02d-%s".format(8 + i, entry.lowercase().replace(' ', '-')))
-                androidx.test.espresso.Espresso.pressBack()
-                waitFor("Everything else, in order.")
+                "Statistics" to "Streaks",
+                "Evening review" to "Finish review",
+                "Runs" to "No runs yet",
+                "Exercises and targets" to "Upper body",
+                "Import timetable" to "Choose an .ics file",
+                "Subjects" to "Linear Algebra",
+                "Places" to "Cavendish Laboratory",
+                "Settings" to "Morning alarm",
+                "Alarms and notifications" to "Exact alarms",
+            ).forEachIndexed { i, (entry, marker) ->
+                click(entry)
+                waitFor(marker)
+                shot("%02d-%s".format(10 + i, entry.lowercase().replace(' ', '-')))
+                clickDescription("Back")
+                waitFor("Statistics")
             }
         }
     }

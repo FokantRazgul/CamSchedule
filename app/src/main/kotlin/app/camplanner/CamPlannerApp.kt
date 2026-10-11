@@ -21,7 +21,8 @@ open class CamPlannerApp : Application() {
         Reschedule.ensurePeriodic(this)
         scope.launch {
             graph.fitness.ensureSeeded()
-            Reschedule.soon(this@CamPlannerApp)
+            // Keeps repeating events filled about a year ahead; this also reschedules alarms.
+            graph.timetable.regenerateAllSeries()
         }
     }
 }

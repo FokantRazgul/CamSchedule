@@ -62,7 +62,11 @@ data class EventOverrideEntity(
     @ColumnInfo(defaultValue = "NULL") val location: String? = null,
     @ColumnInfo(defaultValue = "NULL") val startUtc: Long? = null,
     @ColumnInfo(defaultValue = "NULL") val endUtc: Long? = null,
-)
+) {
+    /** False once every change has been taken back (an override row can outlive its changes). */
+    val changesAnything: Boolean
+        get() = travelMode != null || cancelled || reminderMinutes != null || location != null || startUtc != null || endUtc != null
+}
 
 data class EventWithOverride(
     @Embedded val event: EventEntity,

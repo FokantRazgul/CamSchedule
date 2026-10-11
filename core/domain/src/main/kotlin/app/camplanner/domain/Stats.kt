@@ -36,7 +36,7 @@ object Reading {
     /** Academic subjects that had at least one timed event on [date]. */
     fun subjectsOn(date: LocalDate, events: List<CalendarEvent>, academicIds: Set<Long>, zone: ZoneId): Set<Long> =
         events.asSequence()
-            .filter { !it.allDay && it.subjectId in academicIds && it.start.atZone(zone).toLocalDate() == date }
+            .filter { !it.allDay && !it.cancelled && it.subjectId in academicIds && it.start.atZone(zone).toLocalDate() == date }
             .mapNotNull { it.subjectId }
             .toSet()
 
@@ -107,7 +107,7 @@ object StatsCalculator {
         val academicIds = academic.map { it.id }.toSet()
         val pages = input.reading.associateBy({ it.date to it.subjectId }, { it.pages })
         val scheduledByDate: Map<LocalDate, Set<Long>> = input.events.asSequence()
-            .filter { !it.allDay && it.subjectId in academicIds }
+            .filter { !it.allDay && !it.cancelled && it.subjectId in academicIds }
             .groupBy({ it.start.atZone(zone).toLocalDate() }, { it.subjectId!! })
             .mapValues { it.value.toSet() }
         val earliest = listOfNotNull(

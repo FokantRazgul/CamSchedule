@@ -8,7 +8,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,19 +26,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import app.camplanner.designsystem.components.ActionStyle
-import app.camplanner.designsystem.components.AtlasButton
-import app.camplanner.designsystem.components.DoubleRule
 import app.camplanner.designsystem.components.MoonGlyph
 import app.camplanner.designsystem.components.StarFieldBackground
 import app.camplanner.designsystem.components.SunGlyph
+import app.camplanner.designsystem.kit.Group
+import app.camplanner.designsystem.kit.PrimaryButton
+import app.camplanner.designsystem.kit.SecondaryButton
 import app.camplanner.designsystem.theme.Atlas
 import app.camplanner.designsystem.theme.CamPlannerTheme
 import app.camplanner.domain.Almanac
-import app.camplanner.domain.Roman
 import kotlinx.coroutines.delay
 import java.time.LocalDate
 import java.time.LocalTime
@@ -99,56 +97,44 @@ fun AlarmContent(
     val moon = Almanac.moon(date.atTime(21, 0).atZone(zone).toInstant())
     val hm = DateTimeFormatter.ofPattern("HH:mm", Locale.UK)
 
-    StarFieldBackground(Modifier.fillMaxSize(), starsPer10k = 1.6f) {
+    StarFieldBackground(Modifier.fillMaxSize(), graticule = false, starsPer10k = 1.4f) {
         Column(
-            Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).padding(horizontal = 28.dp),
+            Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Spacer(Modifier.height(48.dp))
-            Text("MANE  ·  ${Roman.of(date.year)}", style = Atlas.type.overline, color = c.textSecondary)
-            Spacer(Modifier.height(Atlas.space.s))
-            DoubleRule(Modifier.fillMaxWidth())
             Spacer(Modifier.weight(1f))
-            Text(
-                DateTimeFormatter.ofPattern("EEEE, d MMMM", Locale.UK).format(date),
-                style = Atlas.type.dateline, color = c.textSecondary,
-            )
+            Text("Good morning", style = Atlas.type.groupTitle, color = c.gold)
+            Text(DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.UK).format(date), style = Atlas.type.reading, color = c.textSecondary)
             Text(
                 hm.format(clock),
-                style = Atlas.type.numeralLarge.copy(fontSize = Atlas.type.numeralLarge.fontSize * 1.9f, lineHeight = Atlas.type.numeralLarge.fontSize * 1.9f),
+                style = Atlas.type.heroNumber.copy(fontSize = Atlas.type.heroNumber.fontSize * 2.3f, lineHeight = Atlas.type.heroNumber.fontSize * 2.3f),
                 color = c.text,
             )
-            Spacer(Modifier.height(Atlas.space.l))
-            Text(
-                firstEngagement?.let { "First, $it." } ?: "Good morning.",
-                style = Atlas.type.aside.copy(fontSize = Atlas.type.title.fontSize),
-                color = c.gold,
-                textAlign = TextAlign.Center,
-            )
-            Spacer(Modifier.height(Atlas.space.xl))
+            Spacer(Modifier.height(20.dp))
+            if (firstEngagement != null) {
+                Group {
+                    Column(Modifier.fillMaxWidth().padding(18.dp)) {
+                        Text("FIRST TODAY", style = Atlas.type.caption, color = c.textSecondary)
+                        Spacer(Modifier.height(4.dp))
+                        Text(firstEngagement, style = Atlas.type.groupTitle, color = c.text)
+                    }
+                }
+                Spacer(Modifier.height(16.dp))
+            }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (sun.sunrise != null) {
                     SunGlyph()
-                    Text("Sunrise ${hm.format(sun.sunrise!!.atZone(zone))}", style = Atlas.type.time, color = c.textSecondary)
-                    Spacer(Modifier.height(1.dp).padding(horizontal = 6.dp))
+                    Text("Sunrise ${hm.format(sun.sunrise!!.atZone(zone))}", style = Atlas.type.supporting, color = c.textSecondary)
+                    Spacer(Modifier.width(8.dp))
                 }
                 MoonGlyph(moon.illumination.toFloat(), moon.waxing)
-                Text(moon.phase.label, style = Atlas.type.time, color = c.textSecondary)
+                Text(moon.phase.label, style = Atlas.type.supporting, color = c.textSecondary)
             }
-            Spacer(Modifier.weight(1.2f))
-            Box(Modifier.fillMaxWidth()) {
-                Column(verticalArrangement = Arrangement.spacedBy(Atlas.space.m)) {
-                    AtlasButton(
-                        "Dismiss", onDismiss, style = ActionStyle.Filled, modifier = Modifier.fillMaxWidth().height(60.dp),
-                        textStyle = Atlas.type.title,
-                    )
-                    AtlasButton(
-                        "Snooze $snoozeMinutes min", onSnooze, style = ActionStyle.Outlined, modifier = Modifier.fillMaxWidth().height(56.dp),
-                        textStyle = Atlas.type.label,
-                    )
-                }
-            }
-            Spacer(Modifier.height(36.dp))
+            Spacer(Modifier.weight(1.3f))
+            PrimaryButton("Dismiss", onDismiss, Modifier.fillMaxWidth().height(64.dp))
+            Spacer(Modifier.height(12.dp))
+            SecondaryButton("Snooze $snoozeMinutes min", onSnooze, Modifier.fillMaxWidth().height(56.dp))
+            Spacer(Modifier.height(32.dp))
         }
     }
 }

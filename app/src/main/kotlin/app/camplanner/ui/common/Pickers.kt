@@ -1,8 +1,6 @@
 package app.camplanner.ui.common
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerDialog
@@ -18,12 +16,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.unit.dp
-import app.camplanner.designsystem.components.ActionStyle
-import app.camplanner.designsystem.components.AtlasButton
-import app.camplanner.designsystem.components.AtlasDialog
-import app.camplanner.designsystem.components.Hairline
+import app.camplanner.designsystem.kit.PickerBox
+import app.camplanner.designsystem.kit.TertiaryButton
 import app.camplanner.designsystem.theme.Atlas
 import app.camplanner.ui.format.Formats
 import java.time.Instant
@@ -31,27 +25,19 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneOffset
 
-/** A value written on a ruled line that opens a picker when tapped: a date or a time. */
+/** A framed field showing a date; tap to pick another. */
 @Composable
-fun PickerField(label: String, value: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Column(modifier.clickable(role = Role.Button, onClick = onClick)) {
-        if (label.isNotEmpty()) Text(label.uppercase(), style = Atlas.type.overline, color = Atlas.colors.textSecondary)
-        Text(value, style = Atlas.type.numeral.copy(fontSize = Atlas.type.title.fontSize), color = Atlas.colors.text, modifier = Modifier.padding(vertical = 4.dp))
-        Hairline()
-    }
+fun DateBox(label: String, date: LocalDate?, onChange: (LocalDate) -> Unit, modifier: Modifier = Modifier, placeholder: String = "Choose") {
+    var open by remember { mutableStateOf(false) }
+    PickerBox(label, date?.let(Formats::shortDate) ?: placeholder, { open = true }, modifier)
+    if (open) DatePick(date ?: LocalDate.now(), { onChange(it); open = false }, { open = false })
 }
 
+/** A framed field showing a time; tap to pick another. */
 @Composable
-fun DateField(label: String, date: LocalDate, onChange: (LocalDate) -> Unit, modifier: Modifier = Modifier) {
+fun TimeBox(label: String, time: LocalTime, onChange: (LocalTime) -> Unit, modifier: Modifier = Modifier) {
     var open by remember { mutableStateOf(false) }
-    PickerField(label, Formats.shortDate(date), { open = true }, modifier)
-    if (open) DatePick(date, { onChange(it); open = false }, { open = false })
-}
-
-@Composable
-fun TimeField(label: String, time: LocalTime, onChange: (LocalTime) -> Unit, modifier: Modifier = Modifier) {
-    var open by remember { mutableStateOf(false) }
-    PickerField(label, Formats.time(time), { open = true }, modifier)
+    PickerBox(label, Formats.time(time), { open = true }, modifier)
     if (open) TimePick(time, { onChange(it); open = false }, { open = false })
 }
 
@@ -64,17 +50,15 @@ fun DatePick(initial: LocalDate, onPick: (LocalDate) -> Unit, onDismiss: () -> U
     DatePickerDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
-            AtlasButton("Choose", {
-                state.selectedDateMillis?.let { onPick(Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate()) }
-            }, style = ActionStyle.Text)
+            TertiaryButton("OK", { state.selectedDateMillis?.let { onPick(Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate()) } })
         },
-        dismissButton = { AtlasButton("Cancel", onDismiss, style = ActionStyle.Text) },
-        colors = DatePickerDefaults.colors(containerColor = c.surface),
+        dismissButton = { TertiaryButton("Cancel", onDismiss, color = c.textSecondary) },
+        colors = DatePickerDefaults.colors(containerColor = c.surfaceHigh),
     ) {
         DatePicker(
             state = state,
             colors = DatePickerDefaults.colors(
-                containerColor = c.surface,
+                containerColor = c.surfaceHigh,
                 selectedDayContainerColor = c.accentFill,
                 selectedDayContentColor = c.text,
                 todayDateBorderColor = c.gold,
@@ -89,24 +73,38 @@ fun DatePick(initial: LocalDate, onPick: (LocalDate) -> Unit, onDismiss: () -> U
 fun TimePick(initial: LocalTime, onPick: (LocalTime) -> Unit, onDismiss: () -> Unit) {
     val state = rememberTimePickerState(initial.hour, initial.minute, is24Hour = true)
     val c = Atlas.colors
-    AtlasDialog(
-        title = "Choose a time",
-        onDismiss = onDismiss,
-        actions = {
-            AtlasButton("Cancel", onDismiss, style = ActionStyle.Text)
-            AtlasButton("Choose", { onPick(LocalTime.of(state.hour, state.minute)) }, style = ActionStyle.Text)
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = c.surfaceHigh,
+        title = { Text("Choose a time", style = Atlas.type.groupTitle, color = c.text) },
+        text = {
+            TimePicker(
+                state = state,
+                colors = TimePickerDefaults.colors(
+                    clockDialColor = c.background,
+                    selectorColor = c.accentFill,
+                    timeSelectorSelectedContainerColor = c.accentFill,
+                    timeSelectorUnselectedContainerColor = c.background,
+                    timeSelectorSelectedContentColor = c.text,
+                    timeSelectorUnselectedContentColor = c.textSecondary,
+                ),
+            )
         },
-    ) {
-        TimePicker(
-            state = state,
-            colors = TimePickerDefaults.colors(
-                clockDialColor = c.background,
-                selectorColor = c.accentFill,
-                timeSelectorSelectedContainerColor = c.accentFill,
-                timeSelectorUnselectedContainerColor = c.background,
-                timeSelectorSelectedContentColor = c.text,
-                timeSelectorUnselectedContentColor = c.textSecondary,
-            ),
-        )
-    }
+        confirmButton = { TertiaryButton("OK", { onPick(LocalTime.of(state.hour, state.minute)) }) },
+        dismissButton = { TertiaryButton("Cancel", onDismiss, color = c.textSecondary) },
+    )
+}
+
+/** A simple yes/no question. */
+@Composable
+fun Confirm(title: String, text: String, confirm: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    val c = Atlas.colors
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = c.surfaceHigh,
+        title = { Text(title, style = Atlas.type.groupTitle, color = c.text) },
+        text = { Text(text, style = Atlas.type.reading, color = c.textSecondary) },
+        confirmButton = { TertiaryButton(confirm, { onConfirm(); onDismiss() }) },
+        dismissButton = { TertiaryButton("Cancel", onDismiss, color = c.textSecondary) },
+    )
 }

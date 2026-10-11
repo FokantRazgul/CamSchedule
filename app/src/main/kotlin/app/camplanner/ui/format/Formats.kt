@@ -54,6 +54,17 @@ object Formats {
         }
     }
 
+    /** "in 25 min", "in 2 h 40 min". */
+    fun inMinutes(minutes: Long): String = if (minutes <= 0) "now" else "in ${duration(minutes)}"
+
+    /** "Today", "Tomorrow", "Yesterday" or "Wed 21 Oct". */
+    fun dayLabel(date: LocalDate, today: LocalDate): String = when (date) {
+        today -> "Today"
+        today.plusDays(1) -> "Tomorrow"
+        today.minusDays(1) -> "Yesterday"
+        else -> shortDate(date)
+    }
+
     fun km(meters: Int): String = String.format(locale, "%.1f", meters / 1000.0)
     fun km(km: Double): String = String.format(locale, "%.1f", km)
 }

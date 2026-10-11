@@ -106,7 +106,7 @@ class AlarmRingingService : Service() {
         return NotificationCompat.Builder(this, Notifications.CHANNEL_ALARM)
             .setSmallIcon(R.drawable.ic_stat_star)
             .setContentTitle("Good morning")
-            .setContentText(line ?: "Your first engagement is coming up")
+            .setContentText(line ?: "Your first event is coming up")
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setOngoing(true)
