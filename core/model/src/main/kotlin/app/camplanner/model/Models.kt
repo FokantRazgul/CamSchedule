@@ -36,6 +36,44 @@ data class CalendarEvent(
     val location: String? = null,
     val note: String? = null,
     val travelModeOverride: TravelMode? = null,
+    /** Minutes before the start for this event's reminder; null = the default from settings, 0 = none. */
+    val reminderMinutes: Int? = null,
+    /** A single occurrence the user cancelled. Still shown (struck through) but never alarmed. */
+    val cancelled: Boolean = false,
+    /** Set for occurrences of a repeating event the user created. */
+    val seriesId: Long? = null,
+)
+
+enum class Frequency { DAILY, WEEKLY }
+
+/**
+ * How a user-made event repeats. Weekly rules list their weekdays (empty = the start date's
+ * weekday); [interval] 2 means every other day or week. Ends on [until] (inclusive), after
+ * [count] occurrences, or never.
+ */
+data class RepeatRule(
+    val frequency: Frequency,
+    val interval: Int = 1,
+    val days: Set<DayOfWeek> = emptySet(),
+    val until: LocalDate? = null,
+    val count: Int? = null,
+)
+
+/** A repeating event the user created; its occurrences are generated from [rule]. */
+data class EventSeries(
+    val id: Long,
+    val title: String,
+    val subjectId: Long?,
+    val startDate: LocalDate,
+    val startTime: LocalTime,
+    val endTime: LocalTime,
+    val rule: RepeatRule,
+    val location: String?,
+    val note: String?,
+    val travelMode: TravelMode?,
+    val reminderMinutes: Int?,
+    /** Dates whose occurrence was deleted or edited separately. */
+    val exceptions: Set<LocalDate> = emptySet(),
 )
 
 data class Assignment(
@@ -108,4 +146,6 @@ data class AppSettings(
     val termStart: LocalDate? = null,
     val termEnd: LocalDate? = null,
     val weekStart: DayOfWeek = DayOfWeek.MONDAY,
+    /** Mornings whose alarm the user switched off ("no alarm tomorrow"). */
+    val skippedMornings: Set<LocalDate> = emptySet(),
 )

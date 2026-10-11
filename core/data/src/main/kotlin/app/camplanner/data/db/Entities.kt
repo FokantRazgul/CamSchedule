@@ -1,5 +1,6 @@
 package app.camplanner.data.db
 
+import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.Index
@@ -40,18 +41,60 @@ data class EventEntity(
     val allDay: Boolean,
     val location: String?,
     val note: String?,
+    /** The repeating event this occurrence was generated from (user-made series only). */
+    @ColumnInfo(defaultValue = "NULL") val seriesId: Long? = null,
+    /** This event's own reminder lead in minutes; null = default, 0 = none. */
+    @ColumnInfo(defaultValue = "NULL") val reminderMinutes: Int? = null,
+    /** Walk or bike for user-made events; imported ones use the override table. */
+    @ColumnInfo(defaultValue = "NULL") val travelMode: String? = null,
 )
 
-/** Per-event choices that must outlive a re-import, keyed by the stable event key. */
+/**
+ * Per-occurrence changes that must outlive a re-import, keyed by the stable event key:
+ * travel mode, a cancelled lecture, a moved time or place, its own reminder.
+ */
 @Entity(tableName = "event_override")
 data class EventOverrideEntity(
     @PrimaryKey val eventKey: String,
     val travelMode: String?,
+    @ColumnInfo(defaultValue = "0") val cancelled: Boolean = false,
+    @ColumnInfo(defaultValue = "NULL") val reminderMinutes: Int? = null,
+    @ColumnInfo(defaultValue = "NULL") val location: String? = null,
+    @ColumnInfo(defaultValue = "NULL") val startUtc: Long? = null,
+    @ColumnInfo(defaultValue = "NULL") val endUtc: Long? = null,
 )
 
 data class EventWithOverride(
     @Embedded val event: EventEntity,
     val overrideMode: String?,
+    val overrideCancelled: Boolean? = null,
+    val overrideReminder: Int? = null,
+    val overrideLocation: String? = null,
+    val overrideStart: Long? = null,
+    val overrideEnd: Long? = null,
+)
+
+/** A repeating event the user made; its occurrences live in `event` with [EventEntity.seriesId]. */
+@Entity(tableName = "series")
+data class SeriesEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val title: String,
+    val subjectId: Long?,
+    val startEpochDay: Long,
+    val startMinute: Int,
+    val endMinute: Int,
+    val frequency: String,
+    val interval: Int,
+    /** Bit 0 = Monday ... bit 6 = Sunday. */
+    val daysMask: Int,
+    val untilEpochDay: Long?,
+    val count: Int?,
+    val location: String?,
+    val note: String?,
+    val travelMode: String?,
+    val reminderMinutes: Int?,
+    /** Comma-separated epoch days of occurrences deleted or edited on their own. */
+    val exceptions: String,
 )
 
 @Entity(tableName = "location")

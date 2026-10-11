@@ -10,6 +10,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import app.camplanner.data.db.CamPlannerDatabase
 import app.camplanner.data.geo.GeoResolver
+import app.camplanner.data.repo.BackupService
 import app.camplanner.data.repo.CheckInRepository
 import app.camplanner.data.repo.FitnessRepository
 import app.camplanner.data.repo.HomeworkRepository
@@ -40,6 +41,7 @@ class DataGraph private constructor(context: Context) {
     val fitness = FitnessRepository(db)
     val checkIns = CheckInRepository(db)
     val routes = RouteService(timetable, locations, settings)
+    val backup = BackupService(db, settings) { onScheduleChanged() }
 
     companion object {
         @Volatile private var instance: DataGraph? = null

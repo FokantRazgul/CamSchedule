@@ -23,10 +23,18 @@ data class Leg(
 
 object DayPlanner {
 
-    /** Timed (non all-day) events that start on [date] in [zone], earliest first. */
-    fun timedEventsOn(events: List<CalendarEvent>, date: LocalDate, zone: ZoneId): List<CalendarEvent> =
+    /**
+     * Timed (non all-day) events that start on [date] in [zone], earliest first. Cancelled
+     * occurrences are left out unless [includeCancelled] (the screens show them struck through).
+     */
+    fun timedEventsOn(
+        events: List<CalendarEvent>,
+        date: LocalDate,
+        zone: ZoneId,
+        includeCancelled: Boolean = false,
+    ): List<CalendarEvent> =
         events
-            .filter { !it.allDay && it.start.atZone(zone).toLocalDate() == date }
+            .filter { !it.allDay && (includeCancelled || !it.cancelled) && it.start.atZone(zone).toLocalDate() == date }
             .sortedWith(compareBy<CalendarEvent>({ it.start }, { it.end }, { it.id }))
 
     /**

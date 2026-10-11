@@ -34,6 +34,9 @@ interface SubjectDao {
     @Query("UPDATE subject_alias SET subjectId = :into WHERE subjectId = :from")
     suspend fun repointAliases(from: Long, into: Long)
 
+    @Query("DELETE FROM subject_alias WHERE subjectId = :subjectId")
+    suspend fun deleteAliases(subjectId: Long)
+
     @Query("SELECT COALESCE(MAX(colorIndex), -1) FROM subject")
     suspend fun maxColorIndex(): Int
 }
@@ -41,33 +44,41 @@ interface SubjectDao {
 @Dao
 interface EventDao {
     @Query(
-        """SELECT e.*, o.travelMode AS overrideMode FROM event e
-           LEFT JOIN event_override o ON o.eventKey = e.eventKey
-           WHERE e.startUtc < :toUtc AND e.endUtc > :fromUtc ORDER BY e.startUtc""",
+        """SELECT e.*, o.travelMode AS overrideMode, o.cancelled AS overrideCancelled, o.reminderMinutes AS overrideReminder,
+           o.location AS overrideLocation, o.startUtc AS overrideStart, o.endUtc AS overrideEnd
+           FROM event e LEFT JOIN event_override o ON o.eventKey = e.eventKey
+           WHERE COALESCE(o.startUtc, e.startUtc) < :toUtc AND COALESCE(o.endUtc, e.endUtc) > :fromUtc
+           ORDER BY COALESCE(o.startUtc, e.startUtc)""",
     )
     fun observeBetween(fromUtc: Long, toUtc: Long): Flow<List<EventWithOverride>>
 
     @Query(
-        """SELECT e.*, o.travelMode AS overrideMode FROM event e
-           LEFT JOIN event_override o ON o.eventKey = e.eventKey
-           WHERE e.startUtc < :toUtc AND e.endUtc > :fromUtc ORDER BY e.startUtc""",
+        """SELECT e.*, o.travelMode AS overrideMode, o.cancelled AS overrideCancelled, o.reminderMinutes AS overrideReminder,
+           o.location AS overrideLocation, o.startUtc AS overrideStart, o.endUtc AS overrideEnd
+           FROM event e LEFT JOIN event_override o ON o.eventKey = e.eventKey
+           WHERE COALESCE(o.startUtc, e.startUtc) < :toUtc AND COALESCE(o.endUtc, e.endUtc) > :fromUtc
+           ORDER BY COALESCE(o.startUtc, e.startUtc)""",
     )
     suspend fun between(fromUtc: Long, toUtc: Long): List<EventWithOverride>
 
     @Query(
-        """SELECT e.*, o.travelMode AS overrideMode FROM event e
-           LEFT JOIN event_override o ON o.eventKey = e.eventKey WHERE e.id = :id""",
+        """SELECT e.*, o.travelMode AS overrideMode, o.cancelled AS overrideCancelled, o.reminderMinutes AS overrideReminder,
+           o.location AS overrideLocation, o.startUtc AS overrideStart, o.endUtc AS overrideEnd
+           FROM event e LEFT JOIN event_override o ON o.eventKey = e.eventKey WHERE e.id = :id""",
     )
     fun observe(id: Long): Flow<EventWithOverride?>
 
     @Query(
-        """SELECT e.*, o.travelMode AS overrideMode FROM event e
-           LEFT JOIN event_override o ON o.eventKey = e.eventKey WHERE e.id = :id""",
+        """SELECT e.*, o.travelMode AS overrideMode, o.cancelled AS overrideCancelled, o.reminderMinutes AS overrideReminder,
+           o.location AS overrideLocation, o.startUtc AS overrideStart, o.endUtc AS overrideEnd
+           FROM event e LEFT JOIN event_override o ON o.eventKey = e.eventKey WHERE e.id = :id""",
     )
     suspend fun get(id: Long): EventWithOverride?
 
-    @Query("SELECT * FROM event WHERE allDay = 0 ORDER BY startUtc")
-    suspend fun allTimed(): List<EventEntity>
+    @Query("""SELECT e.*, o.travelMode AS overrideMode, o.cancelled AS overrideCancelled, o.reminderMinutes AS overrideReminder,
+           o.location AS overrideLocation, o.startUtc AS overrideStart, o.endUtc AS overrideEnd
+           FROM event e LEFT JOIN event_override o ON o.eventKey = e.eventKey WHERE e.allDay = 0 ORDER BY e.startUtc""")
+    suspend fun allTimed(): List<EventWithOverride>
 
     @Query("SELECT MIN(startUtc) FROM event WHERE source = 'IMPORTED'")
     suspend fun firstImportedStart(): Long?
@@ -101,6 +112,39 @@ interface EventDao {
 
     @Upsert
     suspend fun upsertOverride(override: EventOverrideEntity)
+
+    @Query("SELECT * FROM event_override WHERE eventKey = :key")
+    suspend fun override(key: String): EventOverrideEntity?
+
+    @Query("DELETE FROM event_override WHERE eventKey = :key")
+    suspend fun deleteOverride(key: String)
+
+    @Query("SELECT * FROM event WHERE id = :id")
+    suspend fun raw(id: Long): EventEntity?
+
+    @Query("DELETE FROM event WHERE seriesId = :seriesId")
+    suspend fun deleteSeriesOccurrences(seriesId: Long)
+
+    @Query("UPDATE event SET subjectId = NULL WHERE subjectId = :subjectId")
+    suspend fun clearSubject(subjectId: Long)
+}
+
+@Dao
+interface SeriesDao {
+    @Query("SELECT * FROM series")
+    suspend fun all(): List<SeriesEntity>
+
+    @Query("SELECT * FROM series WHERE id = :id")
+    suspend fun get(id: Long): SeriesEntity?
+
+    @Upsert
+    suspend fun upsert(series: SeriesEntity): Long
+
+    @Query("DELETE FROM series WHERE id = :id")
+    suspend fun delete(id: Long)
+
+    @Query("UPDATE series SET subjectId = :into WHERE subjectId = :from")
+    suspend fun repointSubject(from: Long, into: Long?)
 }
 
 @Dao
@@ -146,6 +190,9 @@ interface AssignmentDao {
 
     @Query("UPDATE assignment SET subjectId = :into WHERE subjectId = :from")
     suspend fun repointSubject(from: Long, into: Long)
+
+    @Query("UPDATE assignment SET subjectId = NULL WHERE subjectId = :subjectId")
+    suspend fun clearSubject(subjectId: Long)
 }
 
 @Dao
@@ -167,6 +214,9 @@ interface ReadingDao {
 
     @Query("DELETE FROM reading_log WHERE epochDay = :day AND subjectId = :subjectId")
     suspend fun delete(day: Long, subjectId: Long)
+
+    @Query("DELETE FROM reading_log WHERE subjectId = :subjectId")
+    suspend fun deleteSubject(subjectId: Long)
 }
 
 @Dao
@@ -198,8 +248,14 @@ interface FitnessDao {
     @Query("SELECT * FROM exercise_set WHERE epochDay = :day")
     suspend fun setsOn(day: Long): List<ExerciseSetEntity>
 
-    @Insert
-    suspend fun insertSet(set: ExerciseSetEntity)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSet(set: ExerciseSetEntity): Long
+
+    @Query("SELECT * FROM exercise_set WHERE id = :id")
+    suspend fun set(id: Long): ExerciseSetEntity?
+
+    @Query("SELECT * FROM run_log WHERE id = :id")
+    suspend fun run(id: Long): RunLogEntity?
 
     @Query("DELETE FROM exercise_set WHERE id = :id")
     suspend fun deleteSet(id: Long)
@@ -207,8 +263,8 @@ interface FitnessDao {
     @Query("SELECT * FROM run_log ORDER BY epochDay DESC, id DESC")
     fun observeRuns(): Flow<List<RunLogEntity>>
 
-    @Insert
-    suspend fun insertRun(run: RunLogEntity)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertRun(run: RunLogEntity): Long
 
     @Query("DELETE FROM run_log WHERE id = :id")
     suspend fun deleteRun(id: Long)

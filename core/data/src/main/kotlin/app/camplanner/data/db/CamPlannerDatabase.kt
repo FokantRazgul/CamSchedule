@@ -1,6 +1,7 @@
 package app.camplanner.data.db
 
 import android.content.Context
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -19,9 +20,12 @@ import androidx.room.RoomDatabase
         RunLogEntity::class,
         CheckInEntity::class,
         ScheduledAlarmEntity::class,
+        SeriesEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
+    // v2: repeating events (series), per-occurrence overrides, per-event reminders.
+    autoMigrations = [AutoMigration(from = 1, to = 2)],
 )
 abstract class CamPlannerDatabase : RoomDatabase() {
     abstract fun subjects(): SubjectDao
@@ -32,6 +36,7 @@ abstract class CamPlannerDatabase : RoomDatabase() {
     abstract fun fitness(): FitnessDao
     abstract fun checkIns(): CheckInDao
     abstract fun scheduledAlarms(): ScheduledAlarmDao
+    abstract fun series(): SeriesDao
 
     companion object {
         @Volatile private var instance: CamPlannerDatabase? = null

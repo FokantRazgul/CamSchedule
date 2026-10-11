@@ -65,7 +65,7 @@ object AlarmPlanner {
         val dayEvents = DayPlanner.timedEventsOn(events, date, zone)
         val out = mutableListOf<PlannedAlarm>()
 
-        if (settings.morningAlarmEnabled && dayEvents.isNotEmpty()) {
+        if (settings.morningAlarmEnabled && dayEvents.isNotEmpty() && date !in settings.skippedMornings) {
             out += PlannedAlarm(
                 key = "MORNING:$date",
                 kind = AlarmKind.MORNING,
@@ -90,12 +90,14 @@ object AlarmPlanner {
             }
         }
 
-        if (settings.reminderEnabled) {
-            dayEvents.forEach { event ->
+        // An event's own reminder time wins over the default; 0 means no reminder for it.
+        dayEvents.forEach { event ->
+            val minutes = event.reminderMinutes ?: settings.reminderLeadMinutes.takeIf { settings.reminderEnabled }
+            if (minutes != null && minutes > 0) {
                 out += PlannedAlarm(
                     key = "REMINDER:${event.key}",
                     kind = AlarmKind.REMINDER,
-                    triggerAt = event.start - Duration.ofMinutes(settings.reminderLeadMinutes.toLong()),
+                    triggerAt = event.start - Duration.ofMinutes(minutes.toLong()),
                     date = date,
                     eventId = event.id,
                 )

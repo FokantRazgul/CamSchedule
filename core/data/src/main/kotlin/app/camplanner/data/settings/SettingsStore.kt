@@ -58,6 +58,7 @@ class SettingsStore(context: Context) {
         val importAt = longPreferencesKey("import_at")
         val importCount = intPreferencesKey("import_count")
         val permissionsSeen = booleanPreferencesKey("permissions_seen")
+        val skippedMornings = stringSetPreferencesKey("skipped_mornings")
     }
 
     val settings: Flow<AppSettings> = store.data.map(::read)
@@ -111,6 +112,7 @@ class SettingsStore(context: Context) {
             termStart = p[K.termStart]?.let(LocalDate::ofEpochDay),
             termEnd = p[K.termEnd]?.let(LocalDate::ofEpochDay),
             weekStart = p[K.weekStart]?.let { runCatching { DayOfWeek.valueOf(it) }.getOrNull() } ?: d.weekStart,
+            skippedMornings = p[K.skippedMornings]?.mapNotNull { it.toLongOrNull()?.let(LocalDate::ofEpochDay) }?.toSet() ?: d.skippedMornings,
         )
     }
 
@@ -143,5 +145,50 @@ class SettingsStore(context: Context) {
         if (s.termStart != null) p[K.termStart] = s.termStart!!.toEpochDay() else p.remove(K.termStart)
         if (s.termEnd != null) p[K.termEnd] = s.termEnd!!.toEpochDay() else p.remove(K.termEnd)
         p[K.weekStart] = s.weekStart.name
+        // Old skips are pruned so the set stays small.
+        val cutoff = LocalDate.now().minusDays(7)
+        p[K.skippedMornings] = s.skippedMornings.filter { it.isAfter(cutoff) }.map { it.toEpochDay().toString() }.toSet()
+    }
+
+    // --- Backup ---------------------------------------------------------------------------------
+
+    /** Every stored preference with its type, for the backup file. */
+    suspend fun export(): org.json.JSONObject {
+        val out = org.json.JSONObject()
+        store.data.first().asMap().forEach { (key, value) ->
+            val entry = org.json.JSONObject()
+            when (value) {
+                is Boolean -> entry.put("t", "b").put("v", value)
+                is Int -> entry.put("t", "i").put("v", value)
+                is Long -> entry.put("t", "l").put("v", value)
+                is Double -> entry.put("t", "d").put("v", value)
+                is String -> entry.put("t", "s").put("v", value)
+                is Set<*> -> entry.put("t", "ss").put("v", org.json.JSONArray(value.map { it.toString() }))
+                else -> return@forEach
+            }
+            out.put(key.name, entry)
+        }
+        return out
+    }
+
+    /** Replaces all preferences with those in a backup. */
+    suspend fun import(json: org.json.JSONObject) {
+        store.edit { p ->
+            p.clear()
+            json.keys().forEach { name ->
+                val e = json.getJSONObject(name)
+                when (e.getString("t")) {
+                    "b" -> p[booleanPreferencesKey(name)] = e.getBoolean("v")
+                    "i" -> p[intPreferencesKey(name)] = e.getInt("v")
+                    "l" -> p[longPreferencesKey(name)] = e.getLong("v")
+                    "d" -> p[doublePreferencesKey(name)] = e.getDouble("v")
+                    "s" -> p[stringPreferencesKey(name)] = e.getString("v")
+                    "ss" -> {
+                        val arr = e.getJSONArray("v")
+                        p[stringSetPreferencesKey(name)] = (0 until arr.length()).map { arr.getString(it) }.toSet()
+                    }
+                }
+            }
+        }
     }
 }

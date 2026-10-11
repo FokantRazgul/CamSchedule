@@ -48,7 +48,12 @@ class HomeworkRepository(private val db: CamPlannerDatabase) {
     suspend fun setDone(id: Long, done: Boolean) =
         dao.setDone(id, done, if (done) System.currentTimeMillis() else null)
 
-    suspend fun delete(id: Long) = dao.delete(id)
+    /** Deletes and returns the assignment, so it can be put back with [save]. */
+    suspend fun delete(id: Long): Assignment? {
+        val a = dao.get(id)?.toModel() ?: return null
+        dao.delete(id)
+        return a
+    }
 }
 
 class ReadingRepository(private val db: CamPlannerDatabase) {
@@ -89,12 +94,30 @@ class FitnessRepository(private val db: CamPlannerDatabase) {
 
     fun observeRuns(): Flow<List<RunLog>> = dao.observeRuns().map { list -> list.map { it.toModel() } }
 
-    suspend fun log(exerciseId: Long, amount: Int, date: LocalDate) {
-        if (amount <= 0) return
-        dao.insertSet(ExerciseSetEntity(exerciseId = exerciseId, epochDay = date.toEpochDay(), amount = amount, loggedAtUtc = System.currentTimeMillis()))
+    /**
+     * Logs [amount] (negative to take some off, never below zero for the day). Returns the new
+     * set's id, or null if nothing was logged.
+     */
+    suspend fun log(exerciseId: Long, amount: Int, date: LocalDate): Long? {
+        if (amount == 0) return null
+        val adjusted = if (amount < 0) {
+            val done = dao.setsOn(date.toEpochDay()).filter { it.exerciseId == exerciseId }.sumOf { it.amount }
+            maxOf(amount, -done)
+        } else amount
+        if (adjusted == 0) return null
+        return dao.insertSet(ExerciseSetEntity(exerciseId = exerciseId, epochDay = date.toEpochDay(), amount = adjusted, loggedAtUtc = System.currentTimeMillis()))
     }
 
-    suspend fun deleteSet(id: Long) = dao.deleteSet(id)
+    /** Deletes and returns the set, so Undo can put it back. */
+    suspend fun deleteSet(id: Long): ExerciseSet? {
+        val set = dao.set(id) ?: return null
+        dao.deleteSet(id)
+        return set.toModel()
+    }
+
+    suspend fun restoreSet(set: ExerciseSet) {
+        dao.insertSet(ExerciseSetEntity(set.id, set.exerciseId, set.date.toEpochDay(), set.amount, set.loggedAt.toEpochMilli()))
+    }
 
     suspend fun saveExercise(exercise: Exercise) = dao.upsertExercise(exercise.toEntity())
 
@@ -109,10 +132,21 @@ class FitnessRepository(private val db: CamPlannerDatabase) {
 
     suspend fun deleteCustom(id: Long) = dao.deleteCustomExercise(id)
 
-    suspend fun logRun(date: LocalDate, distanceMeters: Int, durationSeconds: Int) =
+    suspend fun logRun(date: LocalDate, distanceMeters: Int, durationSeconds: Int): Long =
         dao.insertRun(RunLogEntity(epochDay = date.toEpochDay(), distanceMeters = distanceMeters, durationSeconds = durationSeconds))
 
-    suspend fun deleteRun(id: Long) = dao.deleteRun(id)
+    /** Replaces a run's figures (same id). */
+    suspend fun updateRun(run: RunLog) {
+        dao.insertRun(RunLogEntity(run.id, run.date.toEpochDay(), run.distanceMeters, run.durationSeconds))
+    }
+
+    suspend fun deleteRun(id: Long): RunLog? {
+        val run = dao.run(id) ?: return null
+        dao.deleteRun(id)
+        return run.toModel()
+    }
+
+    suspend fun restoreRun(run: RunLog) = updateRun(run)
 }
 
 class CheckInRepository(private val db: CamPlannerDatabase) {
