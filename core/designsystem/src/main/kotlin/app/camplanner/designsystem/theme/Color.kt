@@ -10,6 +10,9 @@ import androidx.compose.ui.graphics.Color
 internal object AtlasPalette {
     val Ink = Color(0xFF0B0D14)
     val Surface = Color(0xFF12151F)
+
+    /** Sheets and dialogs: one step above the surface. */
+    val SurfaceHigh = Color(0xFF191D2A)
     val Hairline = Color(0xFF262A36)
     val Ivory = Color(0xFFEDE6D6)
     val IvoryMuted = Color(0xFF8A8778)
@@ -41,6 +44,8 @@ data class AtlasColors(
     val background: Color,
     /** Raised areas (sheets, the bottom bar). Used sparingly; most structure comes from rules. */
     val surface: Color,
+    /** Bottom sheets, dialogs, the selected day: one step above [surface]. */
+    val surfaceHigh: Color,
     /** 1px rules and outlines. */
     val hairline: Color,
     val text: Color,
@@ -73,6 +78,7 @@ data class AtlasColors(
 val DarkAtlasColors = AtlasColors(
     background = AtlasPalette.Ink,
     surface = AtlasPalette.Surface,
+    surfaceHigh = AtlasPalette.SurfaceHigh,
     hairline = AtlasPalette.Hairline,
     text = AtlasPalette.Ivory,
     textSecondary = AtlasPalette.IvoryMuted,

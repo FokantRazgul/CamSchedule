@@ -54,6 +54,27 @@ data class AtlasType(
     val dateline: TextStyle,
     /** Times of day and durations. */
     val time: TextStyle,
+
+    // --- Reading sizes: sans-serif for everything you read or tap; serif only for titles and big numbers.
+
+    /** Large screen title: "Tuesday 20 October", "Fitness". */
+    val screenTitle: TextStyle = TextStyle(fontFamily = Cormorant, fontWeight = FontWeight.SemiBold, fontSize = 36.sp, lineHeight = 40.sp, fontFeatureSettings = TABULAR),
+    /** The title inside the hero card. */
+    val heroTitle: TextStyle = TextStyle(fontFamily = Cormorant, fontWeight = FontWeight.SemiBold, fontSize = 30.sp, lineHeight = 34.sp, fontFeatureSettings = TABULAR),
+    /** Big counts in rings and tiles. */
+    val heroNumber: TextStyle = TextStyle(fontFamily = Cormorant, fontWeight = FontWeight.SemiBold, fontSize = 44.sp, lineHeight = 44.sp, fontFeatureSettings = TABULAR, lineHeightStyle = trim),
+    /** Group headings: "Schedule", "Today's sets". */
+    val groupTitle: TextStyle = TextStyle(fontFamily = Hanken, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, lineHeight = 22.sp),
+    /** List item titles. */
+    val itemTitle: TextStyle = TextStyle(fontFamily = Hanken, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, lineHeight = 22.sp),
+    /** Paragraphs and values. */
+    val reading: TextStyle = TextStyle(fontFamily = Hanken, fontWeight = FontWeight.Normal, fontSize = 16.sp, lineHeight = 23.sp),
+    /** Supporting lines under titles. */
+    val supporting: TextStyle = TextStyle(fontFamily = Hanken, fontWeight = FontWeight.Normal, fontSize = 14.sp, lineHeight = 20.sp, fontFeatureSettings = "tnum"),
+    /** Buttons and chips. */
+    val button: TextStyle = TextStyle(fontFamily = Hanken, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, lineHeight = 20.sp),
+    /** Small captions and the overline above titles. */
+    val caption: TextStyle = TextStyle(fontFamily = Hanken, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, lineHeight = 18.sp, letterSpacing = 0.02.em, fontFeatureSettings = "tnum"),
 )
 
 val DefaultAtlasType = AtlasType(

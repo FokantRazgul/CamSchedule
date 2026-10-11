@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.unit.dp
 
 val LocalAtlasColors = staticCompositionLocalOf { DarkAtlasColors }
 val LocalAtlasType = staticCompositionLocalOf { DefaultAtlasType }
@@ -62,13 +63,13 @@ internal fun atlasColorScheme(c: AtlasColors): ColorScheme = darkColorScheme(
     outline = c.hairline,
     outlineVariant = c.hairline,
     scrim = c.background,
-    surfaceBright = c.surface,
+    surfaceBright = c.surfaceHigh,
     surfaceDim = c.background,
     surfaceContainerLowest = c.background,
-    surfaceContainerLow = c.background,
+    surfaceContainerLow = c.surface,
     surfaceContainer = c.surface,
-    surfaceContainerHigh = c.surface,
-    surfaceContainerHighest = c.surface,
+    surfaceContainerHigh = c.surfaceHigh,
+    surfaceContainerHighest = c.surfaceHigh,
 )
 
 internal fun atlasTypography(t: AtlasType): Typography = Typography(
@@ -94,7 +95,8 @@ fun CamPlannerTheme(content: @Composable () -> Unit) {
     val colors = DarkAtlasColors
     val type = DefaultAtlasType
     val space = AtlasSpacing()
-    val corner = RoundedCornerShape(space.corner)
+    // Softer corners than the first version: easier to read as tappable.
+    fun r(dp: Int) = RoundedCornerShape(dp.dp)
     CompositionLocalProvider(
         LocalAtlasColors provides colors,
         LocalAtlasType provides type,
@@ -103,9 +105,7 @@ fun CamPlannerTheme(content: @Composable () -> Unit) {
         MaterialTheme(
             colorScheme = atlasColorScheme(colors),
             typography = atlasTypography(type),
-            shapes = Shapes(
-                extraSmall = corner, small = corner, medium = corner, large = corner, extraLarge = corner,
-            ),
+            shapes = Shapes(extraSmall = r(8), small = r(12), medium = r(16), large = r(20), extraLarge = r(28)),
         ) {
             CompositionLocalProvider(
                 LocalContentColor provides colors.text,
